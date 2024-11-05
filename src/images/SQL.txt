@@ -54,7 +54,7 @@ CREATE TABLE personality_vacancies (
     id INT AUTO_INCREMENT,
     personality_id INT NOT NULL,
     vacancy_id INT NOT NULL,
-    distance DECIMAL(2,6) NOT NULL,
+    distance DECIMAL(6,6) NOT NULL,
     PRIMARY KEY (id, personality_id, vacancy_id),
     FOREIGN KEY (personality_id) REFERENCES personalities(id) ON DELETE CASCADE,
     FOREIGN KEY (vacancy_id) REFERENCES vacancies(id) ON DELETE CASCADE
@@ -63,7 +63,7 @@ CREATE TABLE candidate_vacancies (
     id INT AUTO_INCREMENT,
     user_id INT NOT NULL,
     vacancy_id INT NOT NULL,
-    distance DECIMAL(2,6) NOT NULL,
+    distance DECIMAL(6,6) NOT NULL,
     PRIMARY KEY (id, user_id, vacancy_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (vacancy_id) REFERENCES vacancies(id) ON DELETE CASCADE
