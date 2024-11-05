@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Ноя 05 2024 г., 04:33
+-- Время создания: Ноя 06 2024 г., 00:31
 -- Версия сервера: 5.7.39
 -- Версия PHP: 7.2.34
 
@@ -30,14 +30,9 @@ SET time_zone = "+00:00";
 CREATE TABLE IF NOT EXISTS `candidate_vacancies` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `vacancy_id` int(11) NOT NULL
+  `vacancy_id` int(11) NOT NULL,
+  `distance` decimal(6,6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `candidate_vacancies`
-INSERT IGNORE INTO `candidate_vacancies` (`id`, `user_id`, `vacancy_id`) VALUES
-(1, 1, 1),
-(2, 1, 2),
-(3, 2, 3);
 
 -- --------------------------------------------------------
 
@@ -50,12 +45,6 @@ CREATE TABLE IF NOT EXISTS `embeddings` (
   `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Заполнение таблицы `embeddings`
-INSERT IGNORE INTO `embeddings` (`id`, `url`) VALUES
-(1, 'http://example.com/embedding1'),
-(2, 'http://example.com/embedding2'),
-(3, 'http://example.com/embedding3');
-
 -- --------------------------------------------------------
 
 --
@@ -67,12 +56,6 @@ CREATE TABLE IF NOT EXISTS `files` (
   `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Заполнение таблицы `files`
-INSERT IGNORE INTO `files` (`id`, `url`) VALUES
-(1, 'http://example.com/file1.pdf'),
-(2, 'http://example.com/file2.pdf'),
-(3, 'http://example.com/file3.pdf');
-
 -- --------------------------------------------------------
 
 --
@@ -81,18 +64,13 @@ INSERT IGNORE INTO `files` (`id`, `url`) VALUES
 
 CREATE TABLE IF NOT EXISTS `info_candidates` (
   `id` int(11) NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NOT NULL,
   `date_birth` timestamp NULL DEFAULT NULL,
-  `file_id` int(11) NOT NULL,
-  `embedding_id` int(11) NOT NULL
+  `file_id` int(11) DEFAULT NULL,
+  `embedding_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `info_candidates`
-INSERT IGNORE INTO `info_candidates` (`id`, `name`, `phone`, `gender`, `date_birth`, `file_id`, `embedding_id`) VALUES
-(1, 'John Doe', '123-456-7890', 'male', '1990-01-01', 1, 1),
-(2, 'Jane Smith', '098-765-4321', 'female', '1985-05-10', 2, 2);
 
 -- --------------------------------------------------------
 
@@ -103,14 +81,10 @@ INSERT IGNORE INTO `info_candidates` (`id`, `name`, `phone`, `gender`, `date_bir
 CREATE TABLE IF NOT EXISTS `magics` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_id` int(11) NOT NULL
+  `candidate_answer` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `vacancy_answer` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `magics`
-INSERT IGNORE INTO `magics` (`id`, `name`, `description`, `file_id`) VALUES
-(1, 'Magic 1', 'Description of magic 1', 1),
-(2, 'Magic 2', 'Description of magic 2', 2);
 
 -- --------------------------------------------------------
 
@@ -122,13 +96,8 @@ CREATE TABLE IF NOT EXISTS `personalities` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `embedding_id` int(11) NOT NULL
+  `embedding_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `personalities`
-INSERT IGNORE INTO `personalities` (`id`, `name`, `description`, `embedding_id`) VALUES
-(1, 'Personality 1', 'Description of personality 1', 1),
-(2, 'Personality 2', 'Description of personality 2', 2);
 
 -- --------------------------------------------------------
 
@@ -139,13 +108,9 @@ INSERT IGNORE INTO `personalities` (`id`, `name`, `description`, `embedding_id`)
 CREATE TABLE IF NOT EXISTS `personality_vacancies` (
   `id` int(11) NOT NULL,
   `personality_id` int(11) NOT NULL,
-  `vacancy_id` int(11) NOT NULL
+  `vacancy_id` int(11) NOT NULL,
+  `distance` decimal(6,6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `personality_vacancies`
-INSERT IGNORE INTO `personality_vacancies` (`id`, `personality_id`, `vacancy_id`) VALUES
-(1, 1, 1),
-(2, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -164,8 +129,14 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Заполнение таблицы `users`
 INSERT IGNORE INTO `users` (`id`, `email`, `password`, `type`, `info_id`, `created_at`) VALUES
-(1, 'user1@example.com', 'password1', 'candidate', 1, NOW()),
-(2, 'user2@example.com', 'password2', 'employer', NULL, NOW());
+(1, 'danil@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW()),
+(2, 'ksenia@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW()),
+(3, 'vlad@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW()),
+(4, 'kostya@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW()),
+(5, 'egor@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW()),
+(6, 'vasiliy@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW()),
+(7, 'natasha@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW()),
+(8, 'masha@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW());
 
 -- --------------------------------------------------------
 
@@ -179,13 +150,21 @@ CREATE TABLE IF NOT EXISTS `vacancies` (
   `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `salary` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `skill` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `embedding_id` int(11) NOT NULL
+  `embedding_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Заполнение таблицы `vacancies`
+-- Заполнение таблицы `vacancies` с примерами вакансий
 INSERT IGNORE INTO `vacancies` (`id`, `name`, `description`, `salary`, `skill`, `embedding_id`) VALUES
-(1, 'Vacancy 1', 'Description for vacancy 1', '50000', 'Python, SQL', 1),
-(2, 'Vacancy 2', 'Description for vacancy 2', '60000', 'JavaScript, HTML', 2);
+(1, 'Программист Python', 'Разработка и поддержка веб-приложений на Python, написание REST API', '80000', 'Python, Django, REST API, SQL', 1),
+(2, 'Frontend-разработчик', 'Создание интерфейсов для веб-приложений, работа с дизайнерами', '75000', 'JavaScript, HTML, CSS, React', 2),
+(3, 'Аналитик данных', 'Сбор и анализ данных для бизнес-отчетности, построение визуализаций', '70000', 'SQL, Power BI, Excel', 3),
+(4, 'Инженер по машинному обучению', 'Разработка и обучение ML-моделей, работа с большими данными', '120000', 'Python, TensorFlow, PyTorch, SQL', 4),
+(5, 'DevOps инженер', 'Поддержка CI/CD, настройка серверной инфраструктуры, автоматизация процессов', '110000', 'Docker, Kubernetes, CI/CD, Linux', 5),
+(6, 'Менеджер проекта', 'Координация проектов, взаимодействие с командами разработки и заказчиками', '90000', 'Project Management, Agile, Scrum', 6),
+(7, 'Бизнес-аналитик', 'Анализ требований, написание технической документации, работа с заказчиками', '85000', 'UML, BPMN, SQL, Excel', 7),
+(8, 'Специалист по кибербезопасности', 'Разработка и поддержка систем безопасности, анализ угроз', '100000', 'Cybersecurity, Linux, Python, Firewalls', 8),
+(9, 'Системный администратор', 'Поддержка серверов и сетевой инфраструктуры, администрирование ОС', '70000', 'Linux, Windows Server, Bash, Networking', 9),
+(10, 'Full-stack разработчик', 'Разработка фронтенда и бэкенда веб-приложений', '95000', 'JavaScript, Node.js, React, SQL', 10);
 
 --
 -- Индексы сохранённых таблиц
@@ -328,20 +307,20 @@ ALTER TABLE `candidate_vacancies`
 -- Ограничения внешнего ключа таблицы `info_candidates`
 --
 ALTER TABLE `info_candidates`
-  ADD CONSTRAINT `info_candidates_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `info_candidates_ibfk_2` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `info_candidates_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `info_candidates_ibfk_2` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
 
 --
 -- Ограничения внешнего ключа таблицы `magics`
 --
 ALTER TABLE `magics`
-  ADD CONSTRAINT `magics_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `magics_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL;
 
 --
 -- Ограничения внешнего ключа таблицы `personalities`
 --
 ALTER TABLE `personalities`
-  ADD CONSTRAINT `personalities_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `personalities_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
 
 --
 -- Ограничения внешнего ключа таблицы `personality_vacancies`
@@ -360,7 +339,7 @@ ALTER TABLE `users`
 -- Ограничения внешнего ключа таблицы `vacancies`
 --
 ALTER TABLE `vacancies`
-  ADD CONSTRAINT `vacancies_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `vacancies_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
