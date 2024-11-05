@@ -25,6 +25,7 @@
 
 
 Все страницы сайта можно посмотреть [**здесь**](./src/images/HireSnap.pdf)
+Презентация проекта находится [**здесь**](./src/images/HireSnap_presentation.pdf)
 
 
 
