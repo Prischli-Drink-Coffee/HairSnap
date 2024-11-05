@@ -24,7 +24,7 @@
 |------------------------------------------------|--------------------------------------------------|
 
 
-Все страницы сайта можно посмотреть [**здесь**](https://html-preview.github.io/?url=https://github.com/Prischli-Drink-Coffee/HireSnap/blob/v1/src/images/HireSnap.pdf)
+Все страницы сайта можно посмотреть [**здесь**](./src/images/HireSnap.pdf)
 
 
 
