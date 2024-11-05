@@ -24,7 +24,7 @@
 |------------------------------------------------|--------------------------------------------------|
 
 
-Все страницы сайта можно посмотреть [**здесь**](https://html-preview.github.io/?url=https://github.com/deneal123/HireSnap/blob/main/src/images/HireSnap.html)
+Все страницы сайта можно посмотреть [**здесь**](https://html-preview.github.io/?url=https://github.com/deneal123/HireSnap/blob/tree/v1/src/images/HireSnap.html)
 
 
 
