@@ -9,6 +9,7 @@ SAVE_FOLDER = '/mnt/nfs/data/'
 data = pd.read_csv(os.path.join(SAVE_FOLDER, 'metadata_rutube.csv'))
 failed_video = os.path.join(SAVE_FOLDER, 'failed.txt')
 
+
 def process_video(row):
     video_id = row['video_id']
     url = 'https://rutube.ru/video/' + video_id
@@ -43,6 +44,7 @@ def process_video(row):
                 # Ожидаем завершения обеих задач
                 future_audio.result()
                 future_frames.result()
+
 
 # Запускаем обработку в цикле
 for i in tqdm(range(len(data))):

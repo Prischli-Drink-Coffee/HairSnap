@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Сен 24 2024 г., 19:49
+-- Время создания: Ноя 05 2024 г., 04:33
 -- Версия сервера: 5.7.39
 -- Версия PHP: 7.2.34
 
@@ -18,19 +18,134 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- База данных: `NaRuTagAI`
+-- База данных: `HireSnap`
 --
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `categories`
+-- Структура таблицы `candidate_vacancies`
 --
 
-CREATE TABLE IF NOT EXISTS `categories` (
+CREATE TABLE IF NOT EXISTS `candidate_vacancies` (
   `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `user_id` int(11) NOT NULL,
+  `vacancy_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `candidate_vacancies`
+INSERT IGNORE INTO `candidate_vacancies` (`id`, `user_id`, `vacancy_id`) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 2, 3);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `embeddings`
+--
+
+CREATE TABLE IF NOT EXISTS `embeddings` (
+  `id` int(11) NOT NULL,
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `embeddings`
+INSERT IGNORE INTO `embeddings` (`id`, `url`) VALUES
+(1, 'http://example.com/embedding1'),
+(2, 'http://example.com/embedding2'),
+(3, 'http://example.com/embedding3');
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `files`
+--
+
+CREATE TABLE IF NOT EXISTS `files` (
+  `id` int(11) NOT NULL,
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `files`
+INSERT IGNORE INTO `files` (`id`, `url`) VALUES
+(1, 'http://example.com/file1.pdf'),
+(2, 'http://example.com/file2.pdf'),
+(3, 'http://example.com/file3.pdf');
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `info_candidates`
+--
+
+CREATE TABLE IF NOT EXISTS `info_candidates` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `date_birth` timestamp NULL DEFAULT NULL,
+  `file_id` int(11) NOT NULL,
+  `embedding_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `info_candidates`
+INSERT IGNORE INTO `info_candidates` (`id`, `name`, `phone`, `gender`, `date_birth`, `file_id`, `embedding_id`) VALUES
+(1, 'John Doe', '123-456-7890', 'male', '1990-01-01', 1, 1),
+(2, 'Jane Smith', '098-765-4321', 'female', '1985-05-10', 2, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `magics`
+--
+
+CREATE TABLE IF NOT EXISTS `magics` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `magics`
+INSERT IGNORE INTO `magics` (`id`, `name`, `description`, `file_id`) VALUES
+(1, 'Magic 1', 'Description of magic 1', 1),
+(2, 'Magic 2', 'Description of magic 2', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `personalities`
+--
+
+CREATE TABLE IF NOT EXISTS `personalities` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `embedding_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `personalities`
+INSERT IGNORE INTO `personalities` (`id`, `name`, `description`, `embedding_id`) VALUES
+(1, 'Personality 1', 'Description of personality 1', 1),
+(2, 'Personality 2', 'Description of personality 2', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `personality_vacancies`
+--
+
+CREATE TABLE IF NOT EXISTS `personality_vacancies` (
+  `id` int(11) NOT NULL,
+  `personality_id` int(11) NOT NULL,
+  `vacancy_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `personality_vacancies`
+INSERT IGNORE INTO `personality_vacancies` (`id`, `personality_id`, `vacancy_id`) VALUES
+(1, 1, 1),
+(2, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -40,132 +155,150 @@ CREATE TABLE IF NOT EXISTS `categories` (
 
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` enum('candidate, employer') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `info_id` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Заполнение таблицы `users`
+INSERT IGNORE INTO `users` (`id`, `email`, `password`, `type`, `info_id`, `created_at`) VALUES
+(1, 'user1@example.com', 'password1', 'candidate', 1, NOW()),
+(2, 'user2@example.com', 'password2', 'employer', NULL, NOW());
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `api_keys`
+-- Структура таблицы `vacancies`
 --
 
-CREATE TABLE IF NOT EXISTS `api_keys` (
+CREATE TABLE IF NOT EXISTS `vacancies` (
   `id` int(11) NOT NULL,
-  `key` varchar(255) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `salary` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `skill` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `embedding_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Структура таблицы `inference`
---
-
-CREATE TABLE IF NOT EXISTS `inference` (
-  `id` int(11) NOT NULL,
-  `category_ids` varchar(255) NOT NULL,
-  `tag_ids` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `tags`
---
-
-CREATE TABLE IF NOT EXISTS `tags` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `video`
---
-
-CREATE TABLE IF NOT EXISTS `video` (
-  `id` int(11) NOT NULL,
-  `url` varchar(255) DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `description` text,
-  `duration` int(11) NOT NULL,
-  `date_upload` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `video_inference`
---
-
-CREATE TABLE IF NOT EXISTS `video_inference` (
-  `id` int(11) NOT NULL,
-  `video_id` int(11) NOT NULL,
-  `inference_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Заполнение таблицы `vacancies`
+INSERT IGNORE INTO `vacancies` (`id`, `name`, `description`, `salary`, `skill`, `embedding_id`) VALUES
+(1, 'Vacancy 1', 'Description for vacancy 1', '50000', 'Python, SQL', 1),
+(2, 'Vacancy 2', 'Description for vacancy 2', '60000', 'JavaScript, HTML', 2);
 
 --
 -- Индексы сохранённых таблиц
 --
 
 --
--- Индексы таблицы `categories`
+-- Индексы таблицы `candidate_vacancies`
 --
-ALTER TABLE `categories`
+ALTER TABLE `candidate_vacancies`
+  ADD PRIMARY KEY (`id`,`user_id`,`vacancy_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `vacancy_id` (`vacancy_id`);
+
+--
+-- Индексы таблицы `embeddings`
+--
+ALTER TABLE `embeddings`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `files`
+--
+ALTER TABLE `files`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `info_candidates`
+--
+ALTER TABLE `info_candidates`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `file_id` (`file_id`),
+  ADD KEY `embedding_id` (`embedding_id`);
+
+--
+-- Индексы таблицы `magics`
+--
+ALTER TABLE `magics`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `file_id` (`file_id`);
+
+--
+-- Индексы таблицы `personalities`
+--
+ALTER TABLE `personalities`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `embedding_id` (`embedding_id`);
+
+--
+-- Индексы таблицы `personality_vacancies`
+--
+ALTER TABLE `personality_vacancies`
+  ADD PRIMARY KEY (`id`,`personality_id`,`vacancy_id`),
+  ADD KEY `personality_id` (`personality_id`),
+  ADD KEY `vacancy_id` (`vacancy_id`);
 
 --
 -- Индексы таблицы `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `info_id` (`info_id`);
 
 --
--- Индексы таблицы `api_keys`
+-- Индексы таблицы `vacancies`
 --
-ALTER TABLE `api_keys`
-  ADD PRIMARY KEY (`id`);
-  ADD KEY `user_id` (`user_id`);
-
---
--- Индексы таблицы `inference`
---
-ALTER TABLE `inference`
-  ADD PRIMARY KEY (`id`);
-
---
--- Индексы таблицы `tags`
---
-ALTER TABLE `tags`
-  ADD PRIMARY KEY (`id`);
-
---
--- Индексы таблицы `video`
---
-ALTER TABLE `video`
-  ADD PRIMARY KEY (`id`);
-
---
--- Индексы таблицы `video_inference`
---
-ALTER TABLE `video_inference`
-  ADD PRIMARY KEY (`id`,`video_id`,`inference_id`),
-  ADD KEY `video_id` (`video_id`),
-  ADD KEY `inference_id` (`inference_id`);
+ALTER TABLE `vacancies`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `embedding_id` (`embedding_id`);
 
 --
 -- AUTO_INCREMENT для сохранённых таблиц
 --
 
 --
--- AUTO_INCREMENT для таблицы `categories`
+-- AUTO_INCREMENT для таблицы `candidate_vacancies`
 --
-ALTER TABLE `categories`
+ALTER TABLE `candidate_vacancies`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `embeddings`
+--
+ALTER TABLE `embeddings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `files`
+--
+ALTER TABLE `files`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `info_candidates`
+--
+ALTER TABLE `info_candidates`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `magics`
+--
+ALTER TABLE `magics`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `personalities`
+--
+ALTER TABLE `personalities`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT для таблицы `personality_vacancies`
+--
+ALTER TABLE `personality_vacancies`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -175,33 +308,9 @@ ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT для таблицы `api_keys`
+-- AUTO_INCREMENT для таблицы `vacancies`
 --
-ALTER TABLE `api_keys`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT для таблицы `inference`
---
-ALTER TABLE `inference`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT для таблицы `tags`
---
-ALTER TABLE `tags`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT для таблицы `video`
---
-ALTER TABLE `video`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT для таблицы `video_inference`
---
-ALTER TABLE `video_inference`
+ALTER TABLE `vacancies`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -209,15 +318,50 @@ ALTER TABLE `video_inference`
 --
 
 --
--- Ограничения внешнего ключа таблицы `video_inference`
+-- Ограничения внешнего ключа таблицы `candidate_vacancies`
 --
-ALTER TABLE `video_inference`
-  ADD CONSTRAINT `video_inference_ibfk_1` FOREIGN KEY (`video_id`) REFERENCES `video` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `video_inference_ibfk_2` FOREIGN KEY (`inference_id`) REFERENCES `inference` (`id`) ON DELETE CASCADE;
-COMMIT;
+ALTER TABLE `candidate_vacancies`
+  ADD CONSTRAINT `candidate_vacancies_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `candidate_vacancies_ibfk_2` FOREIGN KEY (`vacancy_id`) REFERENCES `vacancies` (`id`) ON DELETE CASCADE;
 
-ALTER TABLE `api_keys`
-  ADD CONSTRAINT `api_keys_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+--
+-- Ограничения внешнего ключа таблицы `info_candidates`
+--
+ALTER TABLE `info_candidates`
+  ADD CONSTRAINT `info_candidates_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `info_candidates_ibfk_2` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+
+--
+-- Ограничения внешнего ключа таблицы `magics`
+--
+ALTER TABLE `magics`
+  ADD CONSTRAINT `magics_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE;
+
+--
+-- Ограничения внешнего ключа таблицы `personalities`
+--
+ALTER TABLE `personalities`
+  ADD CONSTRAINT `personalities_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+
+--
+-- Ограничения внешнего ключа таблицы `personality_vacancies`
+--
+ALTER TABLE `personality_vacancies`
+  ADD CONSTRAINT `personality_vacancies_ibfk_1` FOREIGN KEY (`personality_id`) REFERENCES `personalities` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `personality_vacancies_ibfk_2` FOREIGN KEY (`vacancy_id`) REFERENCES `vacancies` (`id`) ON DELETE CASCADE;
+
+--
+-- Ограничения внешнего ключа таблицы `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`info_id`) REFERENCES `info_candidates` (`id`) ON DELETE SET NULL;
+
+--
+-- Ограничения внешнего ключа таблицы `vacancies`
+--
+ALTER TABLE `vacancies`
+  ADD CONSTRAINT `vacancies_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

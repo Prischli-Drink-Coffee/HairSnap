@@ -50,3 +50,5 @@ aiobotocore
 cryptography
 bcrypt
 opencv-python
+faiss-cpu
+sentence_transformers
