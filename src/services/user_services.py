@@ -2,7 +2,8 @@ from src.repository import user_repository
 from src.database.models import Users
 from fastapi import HTTPException, status
 from src.utils.exam_services import check_for_duplicates, check_if_exists
-from src.utils.hashing import hash_password, validate_password
+from src.utils.hashing import validate_password, hash_password
+from typing import Dict
 
 
 def get_all_users():
@@ -36,15 +37,16 @@ def create_user(user: Users):
     return get_user_by_id(user_id)
 
 
-def update_user(user_id: int, user: Users):
+def update_user(user_id: int, user: Dict):
     check_for_duplicates(
         get_all=get_all_users,
         check_id=user_id,
         attr_name="Email",
-        attr_value=user.Email,
+        attr_value=user.get("email"),
         exception_detail='Email already exist'
     )
-    user.Password = hash_password(user.Password)
+    if user.get("password"):
+        user["password"] = hash_password(user.get("password"))
     user_repository.update_user(user_id, user)
     return {"message": "User updated successfully"}
 

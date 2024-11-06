@@ -12,7 +12,6 @@ from datetime import datetime
 
 env = Env()
 
-
 ACCESS_TOKEN_EXPIRE_MINUTES = int(env.__getattr__("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(env.__getattr__("REFRESH_TOKEN_EXPIRE_DAYS"))
 
@@ -84,7 +83,7 @@ class TypeUser(Enum):
     employer = "employer"
 
 
-class Gender(Enum):
+class GenderUser(Enum):
     """
     Enum of gender
     """
@@ -107,14 +106,14 @@ class Users(BaseModel):
                                 alias="password",
                                 examples=["password"],
                                 description="Пароль пользователя")
-    type: TypeUser = Field(...,
+    Type: TypeUser = Field(...,
                            alias="type",
                            examples=["candidate, employer"],
                            description="Тип пользователя")
-    info_id: Optional[StrictInt] = Field(None,
-                                         alias="info_id",
-                                         examples=[1],
-                                         description="Информация по пользователю")
+    InfoID: Optional[StrictInt] = Field(None,
+                                        alias="info_id",
+                                        examples=[1],
+                                        description="Информация по пользователю")
     CreatedAt: Optional[datetime] = Field(datetime.now(),
                                           alias="created_at",
                                           examples=[f"{datetime.now()}"],
@@ -139,10 +138,10 @@ class InfoCandidates(BaseModel):
                                        alias="phone",
                                        examples=["123-456-7890"],
                                        description="Номер телефона кандидата")
-    Gender: Optional[Gender] = Field(None,
-                                     alias="gender",
-                                     examples=["male"],
-                                     description="Пол кандидата")
+    Gender: Optional[GenderUser] = Field(None,
+                                         alias="gender",
+                                         examples=[GenderUser.male],
+                                         description="Пол кандидата")
     DateBirth: Optional[datetime] = Field(None,
                                           alias="date_birth",
                                           examples=[f"{datetime.now()}"],
@@ -222,10 +221,11 @@ class PersonalityVacancies(BaseModel):
                                  alias="vacancy_id",
                                  examples=[1],
                                  description="ID вакансии")
-    Distance: condecimal(6, 6) = Field(...,
-                                       alias="distance",
-                                       examples=[0.563215],
-                                       description="Семантическое сходство личности и вакансии")
+    Distance: condecimal(max_digits=6,
+                         decimal_places=6) = Field(...,
+                                                   alias="distance",
+                                                   examples=[0.563215],
+                                                   description="Семантическое сходство личности и вакансии")
 
 
 class CandidateVacancies(BaseModel):
@@ -243,10 +243,11 @@ class CandidateVacancies(BaseModel):
                                  alias="vacancy_id",
                                  examples=[1],
                                  description="ID вакансии")
-    Distance: condecimal(6, 6) = Field(...,
-                                       alias="distance",
-                                       examples=[0.563215],
-                                       description="Семантическое сходство вакансии и вакансии")
+    Distance: condecimal(max_digits=6,
+                         decimal_places=6) = Field(...,
+                                                   alias="distance",
+                                                   examples=[0.563215],
+                                                   description="Семантическое сходство вакансии и вакансии")
 
 
 class Magics(BaseModel):

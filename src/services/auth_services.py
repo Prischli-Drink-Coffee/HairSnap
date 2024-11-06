@@ -9,24 +9,24 @@ from typing import Dict
 
 
 def validate_auth_user(auth: Auth):
-    user = user_services.get_user_by_phone(auth.Phone)
+    user = user_services.get_user_by_email(auth.Email)
     if not validate_password(password=auth.Password, hashed_password=user.Password.encode("utf-8")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
     return user
 
 
 def validate_reg_user(user: Users):
-    if not user.FName or not user.LName:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid First Name or Last Name")
+    if not user.Type:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid type user")
     try:
-        user_services.get_user_by_phone(user.Phone)
+        user_services.get_user_by_email(user.Email)
     except Exception:
         pass
     return user
 
 
 def get_user_by_payload(payload):
-    user_id = payload.get("sub")
+    user_id = payload.get("user_id")
     user = user_services.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
@@ -34,14 +34,16 @@ def get_user_by_payload(payload):
 
 
 def signup(user: Users):
+    user = validate_reg_user(user)
     current_user = user_services.create_user(user)
     return TokenInfo(access_token=create_access_token(current_user),
                      refresh_token=create_refresh_token(current_user))
 
 
-def signin(user: Users):
-    return TokenInfo(access_token=create_access_token(user),
-                     refresh_token=create_refresh_token(user))
+def signin(auth: Auth):
+    current_user = validate_auth_user(auth)
+    return TokenInfo(access_token=create_access_token(current_user),
+                     refresh_token=create_refresh_token(current_user))
 
 
 def get_current_token_payload(token: str):

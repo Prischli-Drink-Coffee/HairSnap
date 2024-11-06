@@ -1,5 +1,7 @@
-from src.database.my_connector import db
+from src.database.my_connector import Database
 from src.database.models import Users
+from src.database.my_connector import db
+from typing import Dict
 
 
 def get_all_users():
@@ -18,17 +20,19 @@ def get_user_by_email(email: str):
 
 
 def create_user(user: Users):
-    query = ("INSERT INTO users (email, password)"
-             " VALUES (%s, %s)")
-    params = (user.Email, user.Password)
+    query = ("INSERT INTO users (email, password, type, info_id, created_at, role)"
+             " VALUES (%s, %s, %s, %s, %s, %s)")
+    params = (user.Email, user.Password, user.Type, user.InfoID, user.CreatedAt, user.Role)
     cursor = db.execute_query(query, params)
     return cursor.lastrowid
 
 
-def update_user(user_id: int, user: Users):
-    query = "UPDATE users SET email=%s, password=%s WHERE id=%s"
-    params = (user.Email, user.Password, user_id)
-    db.execute_query(query, params)
+def update_user(user_id: int, user: Dict):
+    fields_to_update = [f"{key}=%s" for key in user.keys()]
+    params = list(user.values())
+    query = f"UPDATE users SET {', '.join(fields_to_update)} WHERE id=%s"
+    params.append(user_id)
+    db.execute_query(query, tuple(params))
 
 
 def delete_user(user_id: int):

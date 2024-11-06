@@ -9,10 +9,9 @@ from src.utils.log_debugging import debug_ex, debug_err, debug_info
 from fastapi.staticfiles import StaticFiles
 from env import Env
 from src import path_to_project
-# from src.database.models import Category, Tag, Video, VideoInference, Inference, Users, APIKey, Predict
-# from src.services import (category_services, tag_services, video_services,
-#                           video_inference_services, inference_services, main_services,
-#                           user_services, api_key_services, authenticate_services)
+from src.database.models import (Users, TokenInfo, Auth, Personalities, PersonalityVacancies, Magics, Embeddings,
+                                 Files, InfoCandidates, Vacancies, CandidateVacancies)
+from src.services import (auth_services, user_services)
 
 env = Env()
 log = setup_logging()
@@ -38,9 +37,9 @@ app.add_middleware(
 
 # Определяем теги
 # PublicMainTag = OpenApiTag(name="Main", description="CRUD operations main")
-# ServerMainTag = OpenApiTag(name="Main", description="CRUD operations main")
-# ServerAPIKeyTag = OpenApiTag(name="APIKey", description="CRUD operations APIKey")
-# ServerUserTag = OpenApiTag(name="User", description="CRUD operations user")
+ServerMainTag = OpenApiTag(name="Main", description="CRUD operations main")
+ServerAuthTag = OpenApiTag(name="Auth", description="CRUD operations user")
+ServerUserTag = OpenApiTag(name="User", description="CRUD operations user")
 # ServerCategoryTag = OpenApiTag(name="Category", description="CRUD operations category")
 # ServerTagTag = OpenApiTag(name="Tag", description="CRUD operations tag")
 # ServerVideoTag = OpenApiTag(name="Video", description="CRUD operations video")
@@ -51,7 +50,8 @@ app.add_middleware(
 app_server.openapi_tags = [
     # ServerMainTag.model_dump(),
     # ServerAPIKeyTag.model_dump(),
-    # ServerUserTag.model_dump(),
+    ServerAuthTag.model_dump(),
+    ServerUserTag.model_dump(),
     # ServerCategoryTag.model_dump(),
     # ServerTagTag.model_dump(),
     # ServerVideoTag.model_dump(),
@@ -65,32 +65,34 @@ app_public.openapi_tags = [
 
 
 
-# @app_public.post("/signup/", response_model=Users, tags=["Main"])
-# async def signup(email: str = Form(...), password: str = Form(...)):
-#     """
-#     Регистрация нового пользователя.
-#     """
-#     try:
-#         user = authenticate_services.register_user(email, password)
-#         return user_services.create_user(user)
-#     except HTTPException as ex:
-#         log.exception("Error during registration", exc_info=ex)
-#         raise ex
-#
-#
-# @app_public.post("/signin/", response_model=Users, tags=["Main"])
-# async def signin(email: str = Form(...), password: str = Form(...)):
-#     """
-#     Авторизация пользователя.
-#     """
-#     try:
-#         user = authenticate_services.auth_user(email, password)
-#         return user_services.create_user(user)
-#     except HTTPException as ex:
-#         log.exception("Error during registration", exc_info=ex)
-#         raise ex
-#
-#
+@app_public.post("/signup/", response_model=TokenInfo, tags=["Auth"])
+async def signup(email: str = Form(...),
+                 password: str = Form(...),
+                 type_user: str = Form(...)):
+    """
+    Регистрация нового пользователя.
+    """
+    try:
+
+        return auth_services.signup(Users(Email=email, Password=password, Type=type_user))
+    except HTTPException as ex:
+        log.exception("Error during registration", exc_info=ex)
+        raise ex
+
+
+@app_public.post("/signin/", response_model=TokenInfo, tags=["Auth"])
+async def signin(email: str = Form(...),
+                 password: str = Form(...)):
+    """
+    Авторизация пользователя.
+    """
+    try:
+        return auth_services.signin(Auth(Email=email, Password=password))
+    except HTTPException as ex:
+        log.exception("Error during registration", exc_info=ex)
+        raise ex
+
+
 # @app_public.post("/get_api_key/", response_model=APIKey, tags=["Main"])
 # async def get_api_key(user: Users = Depends(authenticate_services.get_current_user),
 #                       key_name: str = Form(...)):
@@ -232,104 +234,105 @@ app_public.openapi_tags = [
 #     except HTTPException as ex:
 #         log.exception(f"Error", exc_info=ex)
 #         raise ex
-#
-#
-# @app_server.get("/users/", response_model=list[Users], tags=["User"])
-# async def get_all_users():
-#     """
-#     Route for get all users from basedata.
-#
-#     :return: response model List[Users].
-#     """
-#     try:
-#         return user_services.get_all_users()
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
-# @app_server.get("/users/user_id/{user_id}", response_model=Users, tags=["User"])
-# async def get_user_by_id(user_id: int):
-#     """
-#     Route for get user by UserID.
-#
-#     :param user_id: ID by user. [int]
-#
-#     :return: response model Users.
-#     """
-#     try:
-#         return user_services.get_user_by_id(user_id)
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
-# @app_server.get("/users/email/{email}", response_model=Users, tags=["User"])
-# async def get_user_by_email(email: str):
-#     """
-#     Route for get user by user email.
-#
-#     :param email: Email by user. [int]
-#
-#     :return: response model Users.
-#     """
-#     try:
-#         return user_services.get_user_by_email(email)
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
-# @app_server.post("/users/", response_model=Users, tags=["User"])
-# async def create_user(user: Users):
-#     """
-#     Route for create user in basedata.
-#
-#     :param user: Model user. [Users]
-#
-#     :return: response model Users.
-#     """
-#     try:
-#         return user_services.create_user(user)
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
-# @app_server.put("/users/{user_id}", response_model=Dict, tags=["User"])
-# async def update_user(user_id, user: Users):
-#     """
-#     Route for update user in basedata.
-#
-#     :param user_id: ID by user. [int]
-#
-#     :param user: Model user. [Users]
-#
-#     :return: response model dict.
-#     """
-#     try:
-#         return user_services.update_user(user_id, user)
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
-# @app_server.delete("/users/{user_id}", response_model=Dict, tags=["User"])
-# async def delete_user(user_id):
-#     """
-#     Route for delete user from basedata.
-#
-#     :param user_id: ID by user. [int]
-#
-#     :return: response model dict.
-#     """
-#     try:
-#         return user_services.delete_user(user_id)
-#     except HTTPException as ex:
-#         log.exception(f"Error", exc_info=ex)
-#         raise ex
-#
-#
+
+
+
+@app_server.get("/users/", response_model=list[Users], tags=["User"])
+async def get_all_users():
+    """
+    Route for get all users from basedata.
+
+    :return: response model List[Users].
+    """
+    try:
+        return user_services.get_all_users()
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.get("/users/user_id/{user_id}", response_model=Users, tags=["User"])
+async def get_user_by_id(user_id: int):
+    """
+    Route for get user by UserID.
+
+    :param user_id: ID by user. [int]
+
+    :return: response model Users.
+    """
+    try:
+        return user_services.get_user_by_id(user_id)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.get("/users/email/{email}", response_model=Users, tags=["User"])
+async def get_user_by_email(email: str):
+    """
+    Route for get user by user email.
+
+    :param email: Email by user. [int]
+
+    :return: response model Users.
+    """
+    try:
+        return user_services.get_user_by_email(email)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.post("/users/", response_model=Users, tags=["User"])
+async def create_user(user: Users):
+    """
+    Route for create user in basedata.
+
+    :param user: Model user. [Users]
+
+    :return: response model Users.
+    """
+    try:
+        return user_services.create_user(user)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.put("/users/{user_id}", response_model=Dict, tags=["User"])
+async def update_user(user_id, user: Users):
+    """
+    Route for update user in basedata.
+
+    :param user_id: ID by user. [int]
+
+    :param user: Model user. [Users]
+
+    :return: response model dict.
+    """
+    try:
+        return user_services.update_user(user_id, user)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.delete("/users/{user_id}", response_model=Dict, tags=["User"])
+async def delete_user(user_id):
+    """
+    Route for delete user from basedata.
+
+    :param user_id: ID by user. [int]
+
+    :return: response model dict.
+    """
+    try:
+        return user_services.delete_user(user_id)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
 # @app_server.get("/categories/", response_model=list[Category], tags=["Category"])
 # async def get_all_categories():
 #     """

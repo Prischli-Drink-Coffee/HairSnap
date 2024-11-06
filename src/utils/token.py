@@ -69,8 +69,7 @@ def create_access_token(user: Users) -> str:
     jwt_payload = {
         "sub": user.Role,
         "user_id": user.ID,
-        "first_name": user.FName,
-        "last_name": user.LName
+        "type": user.Type
     }
     return create_jwt(token_type="access_token_type",
                       token_data=jwt_payload,
@@ -79,7 +78,7 @@ def create_access_token(user: Users) -> str:
 
 def create_refresh_token(user: Users) -> str:
     jwt_payload = {
-        "sub": user.ID
+        "sub": user.Role
     }
     return create_jwt(token_type="refresh_token_type",
                       token_data=jwt_payload,
