@@ -69,7 +69,7 @@ def create_access_token(user: Users) -> str:
     jwt_payload = {
         "sub": user.Role,
         "user_id": user.ID,
-        "type": user.Type
+        "type": user.Type.value
     }
     return create_jwt(token_type="access_token_type",
                       token_data=jwt_payload,

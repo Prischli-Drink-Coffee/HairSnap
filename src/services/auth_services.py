@@ -1,4 +1,4 @@
-from src.service import user_services
+from src.services import user_services
 from src.database.models import Users, TokenInfo, Auth
 from src.utils.hashing import hash_password, validate_password
 from fastapi import HTTPException, Depends, Form, status

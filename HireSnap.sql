@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` enum('candidate, employer') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` enum('candidate','employer') COLLATE utf8mb4_unicode_ci NOT NULL,
   `info_id` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `role` enum('user','admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'user'

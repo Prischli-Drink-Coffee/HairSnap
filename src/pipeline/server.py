@@ -38,7 +38,7 @@ app.add_middleware(
 # Определяем теги
 # PublicMainTag = OpenApiTag(name="Main", description="CRUD operations main")
 ServerMainTag = OpenApiTag(name="Main", description="CRUD operations main")
-ServerAuthTag = OpenApiTag(name="Auth", description="CRUD operations user")
+ServerAuthTag = OpenApiTag(name="Auth", description="CRUD operations auth")
 ServerUserTag = OpenApiTag(name="User", description="CRUD operations user")
 # ServerCategoryTag = OpenApiTag(name="Category", description="CRUD operations category")
 # ServerTagTag = OpenApiTag(name="Tag", description="CRUD operations tag")
@@ -65,7 +65,7 @@ app_public.openapi_tags = [
 
 
 
-@app_public.post("/signup/", response_model=TokenInfo, tags=["Auth"])
+@app_server.post("/signup/", response_model=TokenInfo, tags=["Auth"])
 async def signup(email: str = Form(...),
                  password: str = Form(...),
                  type_user: str = Form(...)):
@@ -74,20 +74,20 @@ async def signup(email: str = Form(...),
     """
     try:
 
-        return auth_services.signup(Users(Email=email, Password=password, Type=type_user))
+        return auth_services.signup(Users(email=email, password=password, type=type_user))
     except HTTPException as ex:
         log.exception("Error during registration", exc_info=ex)
         raise ex
 
 
-@app_public.post("/signin/", response_model=TokenInfo, tags=["Auth"])
+@app_server.post("/signin/", response_model=TokenInfo, tags=["Auth"])
 async def signin(email: str = Form(...),
                  password: str = Form(...)):
     """
     Авторизация пользователя.
     """
     try:
-        return auth_services.signin(Auth(Email=email, Password=password))
+        return auth_services.signin(Auth(email=email, password=password))
     except HTTPException as ex:
         log.exception("Error during registration", exc_info=ex)
         raise ex

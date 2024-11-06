@@ -22,7 +22,7 @@ def get_user_by_email(email: str):
 def create_user(user: Users):
     query = ("INSERT INTO users (email, password, type, info_id, created_at, role)"
              " VALUES (%s, %s, %s, %s, %s, %s)")
-    params = (user.Email, user.Password, user.Type, user.InfoID, user.CreatedAt, user.Role)
+    params = (user.Email, user.Password, user.Type.value, user.InfoID, user.CreatedAt, user.Role)
     cursor = db.execute_query(query, params)
     return cursor.lastrowid
 

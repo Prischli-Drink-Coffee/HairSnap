@@ -52,3 +52,4 @@ bcrypt
 opencv-python
 faiss-cpu
 sentence_transformers
+PyJWT==2.8.0

@@ -108,7 +108,7 @@ class Users(BaseModel):
                                 description="Пароль пользователя")
     Type: TypeUser = Field(...,
                            alias="type",
-                           examples=["candidate, employer"],
+                           examples=[TypeUser.candidate],
                            description="Тип пользователя")
     InfoID: Optional[StrictInt] = Field(None,
                                         alias="info_id",
