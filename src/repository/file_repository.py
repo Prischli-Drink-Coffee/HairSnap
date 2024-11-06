@@ -19,10 +19,12 @@ def create_file(file: Files):
     return cursor.lastrowid
 
 
-def update_file(file_id: int, file: files):
-    query = "UPDATE files SET url=%s WHERE id=%s"
-    params = (file.Url, file_id)
-    db.execute_query(query, params)
+def update_file(file_id: int, file: Files):
+    fields_to_update = [f"{key}=%s" for key in file.keys()]
+    params = list(file.values())
+    query = f"UPDATE files SET {', '.join(fields_to_update)} WHERE id=%s"
+    params.append(file_id)
+    db.execute_query(query, tuple(params))
 
 
 def delete_file(file_id: int):

@@ -20,9 +20,11 @@ def create_embedding(embedding: Embeddings):
 
 
 def update_embedding(embedding_id: int, embedding: Embeddings):
-    query = "UPDATE embeddings SET url=%s WHERE id=%s"
-    params = (embedding.Url, embedding_id)
-    db.execute_query(query, params)
+    fields_to_update = [f"{key}=%s" for key in embedding.keys()]
+    params = list(embedding.values())
+    query = f"UPDATE embeddings SET {', '.join(fields_to_update)} WHERE id=%s"
+    params.append(embedding_id)
+    db.execute_query(query, tuple(params))
 
 
 def delete_embedding(embedding_id: int):
