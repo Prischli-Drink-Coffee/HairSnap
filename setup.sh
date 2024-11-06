@@ -18,7 +18,7 @@ fi
 mkdir -p "./logs/setup"
 
 # Создание папки public, если она не существует.
-mkdir -p "./public"
+mkdir -p "./data"
 
 # Создание фала temp, если он не существует.
 touch "./temp.txt"

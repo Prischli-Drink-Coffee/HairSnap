@@ -17,7 +17,7 @@ IF NOT EXIST venv (
 mkdir ".\logs\setup" > nul 2>&1
 
 :: Создание папки public.
-mkdir ".\public" > nul 2>&1
+mkdir ".\data" > nul 2>&1
 
 :: Создание файла temp.
 type nul > ".\temp.txt"
