@@ -228,6 +228,28 @@ class PersonalityVacancies(BaseModel):
                                                    description="Семантическое сходство личности и вакансии")
 
 
+class PersonalityCandidates(BaseModel):
+    """
+    Модель связи личности и вакансии
+    """
+    ID: Optional[int] = Field(None,
+                              alias="id",
+                              examples=[1])
+    PersonalityID: StrictInt = Field(...,
+                                     alias="personality_id",
+                                     examples=[1],
+                                     description="ID личности")
+    UserID: StrictInt = Field(...,
+                              alias="user_id",
+                              examples=[1],
+                              description="ID кандидата")
+    Distance: condecimal(max_digits=6,
+                         decimal_places=6) = Field(...,
+                                                   alias="distance",
+                                                   examples=[0.563215],
+                                                   description="Семантическое сходство личности и вакансии")
+
+
 class CandidateVacancies(BaseModel):
     """
     Модель связи кандидата и вакансии
@@ -261,17 +283,26 @@ class Magics(BaseModel):
                             alias="name",
                             examples=["Дурак"],
                             description="Название карты таро")
+    CandidateExplanation: StrictStr = Field(...,
+                                            alias="candidate_explanation",
+                                            examples=[
+                                                "Эта карта символизирует новые начинания и готовность к приключениям."
+                                                " Откликнуться на вакансию будет правильным шагом, так как это может"
+                                                " привести к новым возможностям."],
+                                            description="Значение карты для кандидата")
+    VacancyExplanation: StrictStr = Field(...,
+                                          alias="vacancy_explanation",
+                                          examples=["Этот аркан символизирует новые начала и открытость к новым"
+                                                    " возможностям. Кандидат готов к экспериментам и может принести"
+                                                    " свежие идеи в команду."],
+                                          description="Значение карты для вакансии")
     CandidateAnswer: StrictStr = Field(...,
                                        alias="candidate_answer",
-                                       examples=["Эта карта символизирует новые начинания и готовность к приключениям."
-                                                 " Откликнуться на вакансию будет правильным шагом, так как это может"
-                                                 " привести к новым возможностям."],
+                                       examples=["Да"],
                                        description="Ответ кандидату")
     VacancyAnswer: StrictStr = Field(...,
                                      alias="vacancy_answer",
-                                     examples=["Этот аркан символизирует новые начала и открытость к новым"
-                                               " возможностям. Кандидат готов к экспериментам и может принести"
-                                               " свежие идеи в команду."],
+                                     examples=["Нет"],
                                      description="Ответ вакансии")
     FileID: Optional[StrictInt] = Field(None,
                                         alias="file_id",

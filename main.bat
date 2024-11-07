@@ -36,7 +36,7 @@ if %errorlevel% equ 0 (
         ) else if "%var%" == "2" (
             cmd /k python.exe ./src/pipeline/server.py
         ) else if "%var%" == "3" (
-            cmd /k python.exe ./src/pipeline/test.py
+            cmd /k pytest ./src/pipeline/test.py
         ) else (
             echo Неизвестное значение в temp.txt: %var%
         )
@@ -47,7 +47,7 @@ if %errorlevel% equ 0 (
         ) else if "%var%" == "2" (
             python.exe ./src/pipeline/server.py
         ) else if "%var%" == "3" (
-            python.exe ./src/pipeline/test.py
+            pytest ./src/pipeline/test.py
         ) else (
             echo Неизвестное значение в temp.txt: %var%
         )

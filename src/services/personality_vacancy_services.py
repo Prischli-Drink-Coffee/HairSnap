@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from src.utils.exam_services import check_for_duplicates, check_if_exists
 from src.services.personality_services import get_personality_by_id
 from src.services.vacancy_services import get_vacancy_by_id
+from typing import Dict
 
 
 def get_all_personality_vacancies():
@@ -27,8 +28,10 @@ def create_personality_vacancy(personality_vacancy: PersonalityVacancies):
 
 def update_personality_vacancy(personality_vacancy_id: int, personality_vacancy: PersonalityVacancies):
     get_personality_vacancy_by_id(personality_vacancy_id)
-    get_personality_by_id(personality_vacancy.PersonalityID)
-    get_vacancy_by_id(personality_vacancy.VacancyID)
+    if personality_vacancy.get("personality_id"):
+        get_personality_by_id(personality_vacancy.get("personality_id"))
+    if personality_vacancy.get("vacancy_id"):
+        get_vacancy_by_id(personality_vacancy.get("vacancy_id"))
     personality_vacancy_repository.update_personality_vacancy(personality_vacancy_id, personality_vacancy)
     return {"message": "Personality vacancy updated successfully"}
 

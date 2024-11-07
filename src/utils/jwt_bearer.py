@@ -33,7 +33,7 @@ class JWTBearer(HTTPBearer):
         try:
             payload = decode_jwt(jwtoken)
             role = payload.get("sub")
-            if self.access_level == 1 and role != "ADMIN":
+            if self.access_level == 1 and role != "admin":
                 ex = HTTPException(status_code=401, detail="Have not access")
                 log.exception(ex)
                 raise ex

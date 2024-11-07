@@ -6,10 +6,8 @@ import string
 from copy import deepcopy
 from fastapi.testclient import TestClient
 from src.pipeline.server import app
-from setup.debug_info import machine
 from src.utils.custom_logging import setup_logging
-from src.utils.list_to_str import encode_list_to_string
-import os
+from src.database.models import GenderUser
 
 log = setup_logging()
 client = TestClient(app)
@@ -29,12 +27,14 @@ def generate_random_data(data_type, length=8):
         return random.randint(1, 1000000)
     elif data_type == "datetime":
         return datetime.now()
+    elif data_type == "float":
+        return round(random.uniform(0, 1), 6)
     return None
 
 
 # Вспомогательная функция для выполнения запросов
-def api_request(method, url, json_data=None):
-    response = client.request(method, url, json=json_data)
+def api_request(method, url, json_data=None, headers=None, data=None):
+    response = client.request(method, url, json=json_data, data=data, headers=headers)
     return response
 
 
@@ -59,132 +59,219 @@ def assert_response(response, expected_status, keys=None):
 # Генерация тестовых данных для различных сущностей
 def generate_test_data(entity_type):
     data_map = {
-        "category": {
-            "name": generate_random_data("string"),
-        },
-        "tag": {
-            "name": generate_random_data("string")
-        },
-        "video": {
-            "url": generate_random_data("string"),
-            "name": generate_random_data("string"),
-            "title": generate_random_data("string"),
-            "description": generate_random_data("string"),
-            "duration": generate_random_data("number"),
-            "date_upload": f"{generate_random_data('datetime')}"
-        },
-        "inference": {
-            "category_ids": None,
-            "tag_ids": None
-        },
-        "video_inference": {
-            "video_id": None,
-            "inference_id": None
-        },
-        "api_key": {
-            "key": generate_random_data("string"),
-            "user_id": None
-        },
         "user": {
             "email": generate_random_data("string"),
             "password": generate_random_data("string"),
-            "created_at": f"{generate_random_data('datetime')}"
+            "type": "candidate",
+            "info_id": None,
+            "created_at": f"{generate_random_data('datetime')}",
+            "role": "admin"
+        },
+        "info_candidate": {
+            "name": generate_random_data("string"),
+            "phone": generate_random_data("string"),
+            "gender": 'male',
+            "data_birth": None,
+            "file_id": None,
+            "embedding_id": None
+        },
+        "candidate_vacancy": {
+            "user_id": None,
+            "vacancy_id": None,
+            "distance": 0.002345
+        },
+        "embedding": {
+            "url": generate_random_data("string")
+        },
+        "file": {
+            "url": generate_random_data("string")
+        },
+        "vacancy": {
+            "name": generate_random_data("string"),
+            "salary": "80000, 90000",
+            "description": generate_random_data("string"),
+            "skill": "SQL, Python",
+            "embedding_id": None
+        },
+        "magic": {
+            "name": generate_random_data("string"),
+            "candidate_explanation": generate_random_data("string"),
+            "vacancy_explanation": generate_random_data("string"),
+            "candidate_answer": "Нет",
+            "vacancy_answer": "Да",
+            "file_id": None
+        },
+        "personality": {
+            "name": generate_random_data("string"),
+            "description": generate_random_data("string"),
+            "embedding_id": None
+        },
+        "personality_vacancy": {
+            "personality_id": None,
+            "vacancy_id": None,
+            "distance": 0.043467
+        },
+        "personality_candidate": {
+            "personality_id": None,
+            "user_id": None,
+            "distance": 0.043467
         }
     }
     return data_map.get(entity_type)
 
 
-tag_ids = []
-category_ids = []
-
-
-def setup_entity(entity_type, endpoint):
-    if entity_type == "inference":
-        inference_data = generate_test_data("inference")
-        for index in range(1, 4):
-            response = api_request("POST", f"server/categories/", json_data={"name": f"category{generate_random_data('number')}"})
-            category_id = response.json()["id"]
-            category_ids.append(category_id)
-        category_ids_str = encode_list_to_string(category_ids)
-        for index in range(1, 4):
-            response = api_request("POST", f"server/tags/", json_data={"name": f"tag{generate_random_data('number')}"})
-            tag_id = response.json()["id"]
-            tag_ids.append(tag_id)
-        tag_ids_str = encode_list_to_string(tag_ids)
-        entity_data = {**inference_data,
-                       "category_ids": category_ids_str,
-                       "tag_ids": tag_ids_str}
-    elif entity_type == "video_inference":
-        video_id = setup_entity("video", "server/videos")
-        inference_id = setup_entity("inference", "server/inferences")
-        video_inference_data = generate_test_data("video_inference")
-        entity_data = {**video_inference_data,
-                       "video_id": video_id,
-                       "inference_id": inference_id}
-    elif entity_type == "api_key":
-        user_id = setup_entity("user", "server/users")
-        entity_data = {**generate_test_data("api_key"),
+def setup_entity(entity_type, endpoint, token):
+    if entity_type == "user":
+        info_candidate_id = setup_entity("info_candidate", "info_candidates",
+                                         token)
+        user_data = generate_test_data("user")
+        entity_data = {**user_data,
+                       "info_id": info_candidate_id}
+    elif entity_type == "info_candidate":
+        file_id = setup_entity("file", "files", token)
+        embedding_id = setup_entity("embedding", "embeddings", token)
+        info_candidate_data = generate_test_data("info_candidate")
+        entity_data = {**info_candidate_data,
+                       "file_id": file_id,
+                       "embedding_id": embedding_id}
+    elif entity_type == "candidate_vacancy":
+        user_id = setup_entity("user", "users", token)
+        vacancy_id = setup_entity("vacancy", "vacancies", token)
+        candidate_vacancy_data = generate_test_data("candidate_vacancy")
+        entity_data = {**candidate_vacancy_data,
+                       "user_id": user_id,
+                       "vacancy_id": vacancy_id}
+    elif entity_type == "vacancy":
+        embedding_id = setup_entity("embedding", "embeddings", token)
+        vacancy_data = generate_test_data("vacancy")
+        entity_data = {**vacancy_data,
+                       "embedding_id": embedding_id}
+    elif entity_type == "magic":
+        file_id = setup_entity("file", "files", token)
+        magic_data = generate_test_data("magic")
+        entity_data = {**magic_data,
+                       "file_id": file_id}
+    elif entity_type == "personality":
+        embedding_id = setup_entity("embedding", "embeddings", token)
+        personality_data = generate_test_data("personality")
+        entity_data = {**personality_data,
+                       "embedding_id": embedding_id}
+    elif entity_type == "personality_vacancy":
+        personality_id = setup_entity("personality", "personalities", token)
+        vacancy_id = setup_entity("vacancy", "vacancies", token)
+        personality_vacancy_data = generate_test_data("personality_vacancy")
+        entity_data = {**personality_vacancy_data,
+                       "personality_id": personality_id,
+                       "vacancy_id": vacancy_id}
+    elif entity_type == "personality_candidate":
+        personality_id = setup_entity("personality", "personalities", token)
+        user_id = setup_entity("user", "users", token)
+        personality_candidate_data = generate_test_data("personality_candidate")
+        entity_data = {**personality_candidate_data,
+                       "personality_id": personality_id,
                        "user_id": user_id}
     else:
         entity_data = generate_test_data(entity_type)
     log.info(f"Creating {entity_type} with data: {entity_data}")
-    response = api_request("POST", f"/{endpoint}/", json_data=entity_data)
+    response = api_request("POST", f"server/{endpoint}/", json_data=entity_data,
+                           headers={"Authorization": f"Bearer {token}"})
     log.info(f"POST {endpoint}/ response: {response.json()}")
     response_data = assert_response(response, 200, keys=["id"])
-    if entity_type == "inference":
-        for tag_id in tag_ids:
-            teardown_entity("server/tags", int(tag_id))
-        tag_ids.clear()
     return response_data["id"]
 
 
 # Функция для удаления сущности
-def teardown_entity(endpoint, entity_id):
-    response = api_request("DELETE", f"/{endpoint}/{entity_id}")
+def teardown_entity(endpoint, entity_id, token):
+    response = api_request("DELETE", f"server/{endpoint}/{entity_id}",
+                           headers={"Authorization": f"Bearer {token}"})
     assert_response(response, 200)
 
 
+# Токен доступа администратора
+access_token = None
+admin_data = [{
+    "email": "admin@mail.ru",
+    "password": "admin",
+    "type_user": "candidate",
+    "role": "admin"
+}]
+
+
+def create_admin():
+    global access_token
+    admin_data.append(generate_test_data("user"))
+    try:
+        response = api_request("POST", "server/signup/", data=admin_data[0])
+        access_token = response.json()["access_token"]
+        response = api_request("POST", "server/signin/", data={
+            "email": admin_data[0]["email"], "password": admin_data[0]["password"]
+        })
+    except Exception as e:
+        log.error(f"{response.json()}")
+        raise e
+
+
+# Инициализация администратора
+create_admin()
+
+
 @pytest.mark.parametrize("entity_type, endpoint, expected_keys", [
-    ("category", "server/categories", ["name"]),
-    ("tag", "server/tags", ["name"]),
-    ("video", "server/videos", ["url"]),
-    ("inference", "server/inferences", ["category_ids", "tag_ids"]),
-    ("video_inference", "server/video_inferences", ["id"]),
-    ("api_key", "server/api_keys", ["key"]),
-    ("user", "server/users", ["email"]),
+    ("user", "users", ["email"]),
+    ("info_candidate", "info_candidates", ["name"]),
+    ("candidate_vacancy", "candidate_vacancies", ["distance"]),
+    ("vacancy", "vacancies", ["name"]),
+    ("magic", "magics", ["name"]),
+    ("personality", "personalities", ["name"]),
+    ("personality_vacancy", "personality_vacancies", ["distance"]),
+    ("personality_candidate", "personality_candidates", ["distance"])
 ])
 def test_create_and_get_entity(entity_type, endpoint, expected_keys):
     log.info("-------------------------------------")
     log.info(f"entity_type: {entity_type}, endpoint: {endpoint}, expected_keys: {expected_keys}")
-    entity_id = setup_entity(entity_type, endpoint)
-    response = api_request("GET", f"/{endpoint}/")
+    entity_id = setup_entity(entity_type, endpoint, access_token)
+    response = api_request("GET", f"server/{endpoint}/")
     assert_response(response, 200, keys=["id"] + expected_keys)
-    response = api_request("GET", f"/{endpoint}/{entity_type}_id/{entity_id}")
+    response = api_request("GET", f"server/{endpoint}/{entity_type}_id/{entity_id}")
     assert_response(response, 200, keys=["id"] + expected_keys)
-    teardown_entity(endpoint, entity_id)
+    teardown_entity(endpoint, entity_id, access_token)
 
 
 @pytest.mark.parametrize("entity_type, endpoint, update_data", [
-    ("category", "server/categories", {"name": generate_random_data("string")}),
-    ("tag", "server/tags", {"name": generate_random_data("string")}),
-    ("video", "server/videos", {"url": generate_random_data("string")}),
-    ("inference", "server/inferences", {"tag_ids": None}),
-    ("video_inference", "server/video_inferences", {"id": generate_random_data("number")}),
-    ("api_key", "server/api_keys", {"key": generate_random_data("string")}),
-    ("user", "server/users", {"email": generate_random_data("string")}),
+    ("user", "users", {"email": generate_random_data("string")}),
+    ("info_candidate", "info_candidates", {"name": generate_random_data("string")}),
+    ("candidate_vacancy", "candidate_vacancies", {"distance": generate_random_data("float")}),
+    ("vacancy", "vacancies", {"name": generate_random_data("string")}),
+    ("magic", "magics", {"name": generate_random_data("string")}),
+    ("personality", "personalities", {"name": generate_random_data("string")}),
+    ("personality_vacancy", "personality_vacancies", {"distance": generate_random_data("float")}),
+    ("personality_candidate", "personality_candidates", {"distance": generate_random_data("float")})
 ])
 def test_update_entity(entity_type, endpoint, update_data):
     log.info("-------------------------------------")
     log.info(f"entity_type: {entity_type}, endpoint: {endpoint}, update_data: {update_data}")
-    entity_id = setup_entity(entity_type, endpoint)
-    response = api_request("GET", f"/{endpoint}/{entity_type}_id/{entity_id}")
+    entity_id = setup_entity(entity_type, endpoint, access_token)
+    response = api_request("GET", f"server/{endpoint}/{entity_type}_id/{entity_id}")
     test_data = response.json()
+    response = api_request("PUT", f"server/{endpoint}/{entity_id}", json_data=test_data,
+                           headers={"Authorization": f"Bearer {access_token}"})
+    assert_response(response, 200)
     updated_data = deepcopy(test_data)
     updated_data.update(update_data)
-    response = api_request("PUT", f"/{endpoint}/{entity_id}", json_data=updated_data)
+    response = api_request("PUT", f"server/{endpoint}/{entity_id}", json_data=updated_data,
+                           headers={"Authorization": f"Bearer {access_token}"})
     assert_response(response, 200)
-    teardown_entity(endpoint, entity_id)
+    if update_data.get("id"):
+        entity_id = update_data.get("id")
+    teardown_entity(endpoint, entity_id, access_token)
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+# Удаление администратора
+def del_admin():
+    email = admin_data[0].get("email")
+    response = api_request("GET", f"server/users/email/{email}",
+                           headers={"Authorization": f"Bearer {access_token}"})
+    admin = response.json()
+    teardown_entity("users", admin["id"], access_token)
+
+
+del_admin()

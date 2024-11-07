@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from src.utils.exam_services import check_for_duplicates, check_if_exists
 from src.services.user_services import get_user_by_id
 from src.services.vacancy_services import get_vacancy_by_id
+from typing import Dict
 
 
 def get_all_candidate_vacancies():
@@ -27,8 +28,10 @@ def create_candidate_vacancy(candidate_vacancy: CandidateVacancies):
 
 def update_candidate_vacancy(candidate_vacancy_id: int, candidate_vacancy: CandidateVacancies):
     get_candidate_vacancy_by_id(candidate_vacancy_id)
-    get_user_by_id(candidate_vacancy.UserID)
-    get_vacancy_by_id(candidate_vacancy.VacancyID)
+    if candidate_vacancy.get("user_id"):
+        get_user_by_id(candidate_vacancy.get("user_id"))
+    if candidate_vacancy.get("vacancy_id"):
+        get_vacancy_by_id(candidate_vacancy.get("vacancy_id"))
     candidate_vacancy_repository.update_candidate_vacancy(candidate_vacancy_id, candidate_vacancy)
     return {"message": "Candidate vacancy updated successfully"}
 

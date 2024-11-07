@@ -144,6 +144,20 @@ INSERT IGNORE INTO `users` (`id`, `email`, `password`, `type`, `info_id`, `creat
 -- --------------------------------------------------------
 
 --
+-- Структура таблицы `personality_candidates`
+--
+
+CREATE TABLE IF NOT EXISTS `personality_candidates` (
+  `id` int(11) NOT NULL,
+  `personality_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `distance` decimal(6,6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+
+--
 -- Структура таблицы `vacancies`
 --
 
@@ -229,6 +243,15 @@ ALTER TABLE `personality_vacancies`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD KEY `info_id` (`info_id`);
+  
+--
+-- Индексы таблицы `personality_candidates`
+--
+ALTER TABLE `personality_candidates`
+  ADD PRIMARY KEY (`id`,`personality_id`,`user_id`),
+  ADD KEY `personality_id` (`personality_id`),
+  ADD KEY `user_id` (`user_id`);
+
 
 --
 -- Индексы таблицы `vacancies`
@@ -288,6 +311,13 @@ ALTER TABLE `personality_vacancies`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  
+--
+-- AUTO_INCREMENT для таблицы `personality_candidates`
+--
+ALTER TABLE `personality_candidates`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 
 --
 -- AUTO_INCREMENT для таблицы `vacancies`
@@ -337,6 +367,14 @@ ALTER TABLE `personality_vacancies`
 --
 ALTER TABLE `users`
   ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`info_id`) REFERENCES `info_candidates` (`id`) ON DELETE SET NULL;
+  
+--
+-- Ограничения внешнего ключа таблицы `personality_candidates`
+--
+ALTER TABLE `personality_candidates`
+  ADD CONSTRAINT `personality_candidates_ibfk_1` FOREIGN KEY (`personality_id`) REFERENCES `personalities` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `personality_candidates_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
 
 --
 -- Ограничения внешнего ключа таблицы `vacancies`

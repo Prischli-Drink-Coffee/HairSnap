@@ -2,6 +2,8 @@ from src.database.my_connector import Database
 from src.database.models import InfoCandidates
 from src.database.my_connector import db
 from typing import Dict
+from src.utils.log_debugging import debug_ex, debug_err, debug_info
+
 
 
 def get_all_info_candidates():
@@ -18,7 +20,7 @@ def create_info_candidate(info_candidate: InfoCandidates):
     query = ("INSERT INTO info_candidates (name, phone, gender,"
              " date_birth, file_id, embedding_id)"
              " VALUES (%s, %s, %s, %s, %s, %s)")
-    params = (info_candidate.Name, info_candidate.Phone, info_candidate.Gender,
+    params = (info_candidate.Name, info_candidate.Phone, info_candidate.Gender.value,
               info_candidate.DateBirth, info_candidate.FileID, info_candidate.EmbeddingID)
     cursor = db.execute_query(query, params)
     return cursor.lastrowid
