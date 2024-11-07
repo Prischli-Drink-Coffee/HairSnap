@@ -47,15 +47,12 @@ if [ $? -eq 0 ]; then
 
         case "$var" in
             "1")
-                gnome-terminal -- python3 ./src/pipeline/data_downloader.py
-                ;;
-            "2")
                 gnome-terminal -- python3 ./src/pipeline/train.py
                 ;;
-            "3")
+            "2")
                 gnome-terminal -- python3 ./src/pipeline/server.py
                 ;;
-            "4")
+            "3")
                 gnome-terminal -- python3 ./src/pipeline/test.py
                 ;;
             *)
@@ -68,15 +65,12 @@ if [ $? -eq 0 ]; then
 
         case "$var" in
             "1")
-                python3 ./src/pipeline/data_downloader.py
-                ;;
-            "2")
                 python3 ./src/pipeline/train.py
                 ;;
-            "3")
+            "2")
                 python3 ./src/pipeline/server.py
                 ;;
-            "4")
+            "3")
                 python3 ./src/pipeline/test.py
                 ;;
             *)

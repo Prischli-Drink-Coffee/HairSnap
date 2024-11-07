@@ -77,8 +77,8 @@ class CreateSQL:
                         log.info(f"Inserted data into personalities table from {table_name}.csv")
                     elif table_name == 'taro':
                         cursor.executemany(
-                            "INSERT INTO `magics` (`name`, `candidate_explanation`, `vacancy_explanation`,"
-                            " `candidate_answer`, `vacancy_answer`) VALUES (%s, %s, %s, %s, %s)",
+                            "INSERT INTO `magics` (`name`, `candidate_answer`, `candidate_explanation`,"
+                            " `vacancy_answer`, `vacancy_explanation`) VALUES (%s, %s, %s, %s, %s)",
                             data
                         )
                         log.info(f"Inserted data into magics table from {table_name}.csv")
