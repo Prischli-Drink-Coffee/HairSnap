@@ -61,36 +61,53 @@ def audio2text(path_to_audio: str, path_to_table_speech: str,
 
     return predicted_sentence
 
+
 # model ids
 # MODEL_ID = "jonatasgrosman/wav2vec2-xls-r-1b-russian"   # 3.85 Gb
 # MODEL_ID = "jonatasgrosman/wav2vec2-large-xlsr-53-russian"  # 1.2 Gb
 # MODEL_ID = "emre/wav2vec2-xls-r-300m-Russian-small"   # 1.2 Gb
+# "UrukHan/wav2vec2-russian" - но с текущим не запускается
 
 def main():
     parser = argparse.ArgumentParser(description="Convert video to audio and transcribe speech to text.")
-    parser.add_argument("video_path", type=str, help="Path to the video file.")
-    parser.add_argument("table_path", type=str, help="Path to save the transcription table (CSV).")
+    
+    # Параметры для видеофайла или папки
+    parser.add_argument("--video_file_path", type=str, help="Path to the video file.")
+    parser.add_argument("--video_folder_path", type=str, help="Path to the folder containing video files.")
+    
+    parser.add_argument("--table_path", type=str, default="data/candidates_table.csv", help="Path to save the transcription table (.csv).")
     parser.add_argument("--audio_folder", type=str, default="data/temp_audio", help="Temporary folder to store audio files.")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    
     args = parser.parse_args()
 
-    # Загрузка модели и процессора
-    processor, model = load_models("jonatasgrosman/wav2vec2-large-xlsr-53-russian", 
-                                   device)
-    
-    # Конвертация видео в аудио
-    audio_path = video2audio(args.video_path, args.audio_folder)
-    
-    # Конвертация аудио в текст и запись в таблицу
-    print("Transcribing audio...")
-    transcript = audio2text(audio_path, args.table_path, processor, model, device)
-    print("Transcription complete:", transcript)
+    # Проверка, чтобы не передавать одновременно путь к файлу и к папке
+    if bool(args.video_file_path) == bool(args.video_folder_path):
+        print("Error: Please specify either --video_file_path or --video_folder_path, but not both.")
+        sys.exit(1)
 
-    # Удаление временного аудиофайла
-    os.remove(audio_path)
-    print("Temporary audio file removed.")
+    # Загрузка модели и процессора
+    processor, model = load_models(model_id="jonatasgrosman/wav2vec2-large-xlsr-53-russian", device=device)
+    
+    if args.video_folder_path:
+        for filename in os.listdir(args.video_folder_path):
+            if filename.endswith(".mp4"):
+                video_file_path = os.path.join(args.video_folder_path, filename)
+                print(f"Converting video to audio: {video_file_path}")
+                audio_path = video2audio(video_file_path, args.audio_folder)
+                print(f"Converting audio to text")
+                predicted_sentence = audio2text(audio_path, args.table_path, processor, model, device)
+                print(f'Speech: \n {predicted_sentence} \n')
+                os.remove(audio_path)
+                
+    else:
+        print(f"Converting video to audio: {args.video_file_path}")
+        audio_path = video2audio(args.video_file_path, args.audio_folder)
+        print(f"Converting audio to text")
+        predicted_sentence = audio2text(audio_path, args.table_path, processor, model, device)
+        os.remove(audio_path)
+        print(f'Speech: \n {predicted_sentence} \n')
 
 if __name__ == "__main__":
     main()
