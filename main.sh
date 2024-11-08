@@ -23,19 +23,16 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/venv/lib/python3.9/site-packages
 python3 ./setup/validate_requirements.py
 
 # Очистка setup.log
-python3 ./clear_setup_log.py
+python3 ./src/utils/clear_setup_log.py
 
 # Меню выбора интерфейса
 python3 ./setup/gui_windows.py
 
-# Чтение значения из файла temp.txt
-if [ -f "temp.txt" ]; then
-    var=$(<temp.txt)
-else
-    echo "Файл temp.txt не найден."
-    exit 1
-fi
+# Определяем путь к файлу .env
+ENV_FILE=".env"
 
+# Ищем строку, начинающуюся с "CHOICE=", и считываем значение после знака "="
+var=$(grep "^CHOICE=" "$ENV_FILE" | cut -d '=' -f2)
 
 # Запуск соответствующего скрипта на основе значения в temp.txt
 # shellcheck disable=SC2181

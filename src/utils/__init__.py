@@ -4,9 +4,13 @@ project_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
 sys.path.insert(0, project_path)
 
 
-def path_to_config():
-    return os.path.join(project_path, 'config.yaml')
-
-
 def path_to_project():
     return os.path.join(project_path)
+
+
+def path_to_config():
+    return os.path.join(project_path, 'src/config.yaml')
+
+
+def path_to_logging():
+    return os.path.join(project_path, 'src/logging.yaml')

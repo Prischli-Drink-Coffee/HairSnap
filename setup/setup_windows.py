@@ -22,7 +22,7 @@ def install_tensorflow():
     # Обновление pip, если необходимо
     setup_common.install('--upgrade pip')
 
-    setup_common.install_requirements('requirements_windows_tensorflow.txt', check_no_verify_flag=True)
+    setup_common.install_requirements('requirements_external.txt', check_no_verify_flag=True)
 
 
 def sync_bits_and_bytes_files():

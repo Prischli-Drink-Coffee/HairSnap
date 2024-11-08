@@ -19,9 +19,6 @@ mkdir ".\logs\setup" > nul 2>&1
 :: Создание папки public.
 mkdir ".\data" > nul 2>&1
 
-:: Создание файла temp.
-type nul > ".\temp.txt"
-
 :: Деактивация активной среды.
 call .\venv\Scripts\deactivate.bat
 

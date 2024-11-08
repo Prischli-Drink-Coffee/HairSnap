@@ -53,8 +53,6 @@ class Env:
             raise ex
 
 
-env = Env()
-
-
 if __name__ == '__main__':
+    env = Env()
     print(env)

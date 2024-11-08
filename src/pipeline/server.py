@@ -994,7 +994,8 @@ def run_server():
     import logging
     import uvicorn
     import yaml
-    uvicorn_log_config = './logging.yaml'
+    from src import path_to_logging
+    uvicorn_log_config = path_to_logging()
     with open(uvicorn_log_config, 'r') as f:
         uvicorn_config = yaml.safe_load(f.read())
         logging.config.dictConfig(uvicorn_config)

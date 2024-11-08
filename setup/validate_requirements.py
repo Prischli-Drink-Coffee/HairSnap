@@ -86,7 +86,7 @@ def main():
         setup_common.install_requirements(args.requirements, check_no_verify_flag=True)
     else:
         if tensorflow_ver == 0:
-            setup_common.install_requirements('requirements_windows_tensorflow.txt', check_no_verify_flag=True)
+            setup_common.install_requirements('requirements_external.txt', check_no_verify_flag=True)
 
 
 if __name__ == '__main__':

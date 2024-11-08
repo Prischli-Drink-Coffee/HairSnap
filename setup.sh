@@ -20,9 +20,6 @@ mkdir -p "./logs/setup"
 # Создание папки public, если она не существует.
 mkdir -p "./data"
 
-# Создание фала temp, если он не существует.
-touch "./temp.txt"
-
 # Деактивация активной среды.
 if [[ "$VIRTUAL_ENV" != "" ]]; then
     deactivate

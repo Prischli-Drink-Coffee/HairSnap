@@ -23,7 +23,7 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/venv/lib/python3.9/site-packages
 python3 ./setup/validate_requirements.py
 
 # Очистка setup.log
-python3 ./clear_setup_log.py
+python3 ./src/utils/clear_setup_log.py
 
 # Запуск сервера
 python3 ./src/pipeline/server.py
