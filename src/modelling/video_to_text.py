@@ -93,7 +93,7 @@ def main():
                 audio_path = video2audio(video_file_path, args.audio_folder)
                 predicted_sentence = audio2text(audio_path, args.table_path, processor, model, device)
                 os.remove(audio_path)
-        shutil.rmtree(args.video_folder_path)
+        shutil.rmtree(args.audio_folder)
                 
     else:
         print(f"Converting video to audio: {args.video_file_path}")

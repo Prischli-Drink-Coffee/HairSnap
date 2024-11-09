@@ -11,7 +11,7 @@ def load_type_embeddings(type_embeddings_folder, threshold=16):
     return np.array([
         np.load(os.path.join(type_embeddings_folder, file))
         for file in os.listdir(type_embeddings_folder)
-        if file.endswith('.npy') and int(file[:-4]) > threshold
+        if file.endswith('.npy')
     ])
 
 

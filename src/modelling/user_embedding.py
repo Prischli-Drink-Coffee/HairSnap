@@ -7,6 +7,7 @@ from torchvision import transforms
 from PIL import Image
 from sentence_transformers import SentenceTransformer
 from cosmos_tokenizer.video_lib import CausalVideoTokenizer
+
 from src.modelling.video_to_text import load_models, video2audio, audio2text
 from src.modelling.get_frames import extract_frames_ffmpeg
 from src.modelling.get_video_embedding import UNet3D

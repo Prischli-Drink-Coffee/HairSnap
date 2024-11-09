@@ -2,7 +2,6 @@ import os
 import subprocess
 import argparse
 from tqdm import tqdm
-import math
 
 def extract_frames_ffmpeg(video_path, output_dir, num_frames=16, frame_size=(224, 224)):
     # Get video ID from the filename (without extension)
