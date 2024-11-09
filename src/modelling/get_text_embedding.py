@@ -18,8 +18,8 @@ def get_text_csv(path_to_csv: str):
     # columns: [id, text]
     df = pd.read_csv(path_to_csv)
 
-    ids = df.index
-    # ids = df.iloc[:, 0].values
+    # ids = df.index
+    ids = df.iloc[:, 0].values
     texts = df.iloc[:, 1].values
     return ids, texts
 

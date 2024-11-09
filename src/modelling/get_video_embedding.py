@@ -1,7 +1,9 @@
 import os
 import argparse
+import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
@@ -58,63 +60,74 @@ class EmbeddingDataset(Dataset):
         return self.embeddings[idx]
 
 
-class VideoAutoencoder(nn.Module):
-    def __init__(self, num_frames, hid_dim, latent_dim=384):
-        super(VideoAutoencoder, self).__init__()
-        
-        # Энкодер
-        self.encoder_conv = nn.Sequential(
-            nn.Conv3d(in_channels=num_frames, out_channels=64, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(),
-            nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(),
-            nn.Conv3d(128, 256, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(),
-            nn.Flatten()
+class UNet3D(nn.Module):
+    def __init__(self, in_channels, out_channels, base_filters=32, latent_dim=384):
+        super(UNet3D, self).__init__()
+
+        # Encoder
+        self.enc1 = self.conv_block(in_channels, base_filters)
+        self.enc2 = self.conv_block(base_filters, base_filters * 2)
+        self.enc3 = self.conv_block(base_filters * 2, base_filters * 4)
+
+        # Adaptive pooling and linear layer for latent space representation
+        self.adaptive_pool = nn.AdaptiveAvgPool3d(1)
+        self.fc_latent = nn.Linear(base_filters * 4, latent_dim)
+
+        # Decoder
+        self.upconv2 = nn.ConvTranspose3d(base_filters * 4, base_filters * 2, kernel_size=2, stride=2)
+        self.dec2 = self.conv_block(base_filters * 4, base_filters * 2)
+        self.upconv1 = nn.ConvTranspose3d(base_filters * 2, base_filters, kernel_size=2, stride=2)
+        self.dec1 = self.conv_block(base_filters * 2, base_filters)
+
+        # Output
+        self.out_conv = nn.Conv3d(base_filters, out_channels, kernel_size=1)
+
+    def conv_block(self, in_channels, out_channels, kernel_size=3, padding=1):
+        return nn.Sequential(
+            nn.Conv3d(in_channels, out_channels, kernel_size=kernel_size, padding=padding),
+            nn.BatchNorm3d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(out_channels, out_channels, kernel_size=kernel_size, padding=padding),
+            nn.BatchNorm3d(out_channels),
+            nn.ReLU(inplace=True)
         )
-        
-        # Полносвязный слой для перехода к латентному представлению
-        self.fc_enc = nn.Linear(256 * (num_frames // 8) * 4 * 4, latent_dim)
-        
-        # Декодер
-        self.fc_dec = nn.Linear(latent_dim, 256 * (num_frames // 8) * 4 * 4)
-        
-        self.decoder_conv = nn.Sequential(
-            nn.ConvTranspose3d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose3d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose3d(64, hid_dim, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid()  # Используем Sigmoid, если значения на выходе должны быть в диапазоне [0, 1]
-        )
-
-        self.num_frames = num_frames
-
-    def encode(self, x):
-        x = self.encoder_conv(x)
-        x = self.fc_enc(x)
-        return x
-
-    def decode(self, z):
-        z = self.fc_dec(z)
-        z = z.view(-1, 256, self.num_frames // 8, 4, 4)  # Изменяем размер для 3D декодера
-        z = self.decoder_conv(z)
-        return z
 
     def forward(self, x):
-        latent = self.encode(x)
-        reconstructed = self.decode(latent)
-        return reconstructed, latent
+        # Encoder
+        x = x.permute(0, 2, 1, 3, 4)
+        enc1 = self.enc1(x)
+        enc2 = self.enc2(F.max_pool3d(enc1, 2))
+        enc3 = self.enc3(F.max_pool3d(enc2, 2))
+        
+        # Latent representation
+        pooled = self.adaptive_pool(enc3)  # Размер [batch_size, base_filters*4, 1, 1, 1]
+        pooled = pooled.view(pooled.size(0), -1)  # Размер [batch_size, base_filters*4]
+        latent = self.fc_latent(pooled)  # Размер [batch_size, latent_dim]
 
-def train_autoencoder(model, data_loader, num_epochs, learning_rate, device):
+        # Decoder
+        up2 = self.upconv2(enc3)
+        dec2 = self.dec2(torch.cat([up2, enc2], dim=1))
+        up1 = self.upconv1(dec2)
+        dec1 = self.dec1(torch.cat([up1, enc1], dim=1))
+
+        # Output
+        out = self.out_conv(dec1)
+        out = out.permute(0, 2, 1, 3, 4)
+        return out, latent
+
+def train_autoencoder(model, data_loader, num_epochs, learning_rate, device, weights_path):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    best_loss = float('inf')  # Инициализация лучшей ошибки как бесконечность
 
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
+
         for inputs in data_loader:
             inputs = inputs.to(device)
+            inputs = inputs.to(torch.float32)
             optimizer.zero_grad()
             
             outputs, _ = model(inputs)
@@ -123,8 +136,32 @@ def train_autoencoder(model, data_loader, num_epochs, learning_rate, device):
             optimizer.step()
             
             running_loss += loss.item()
-        
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {running_loss / len(data_loader):.4f}")
+
+        epoch_loss = running_loss / len(data_loader)
+        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}")
+
+        # Сохраняем модель с наименьшей ошибкой
+        if epoch_loss < best_loss:
+            best_loss = epoch_loss
+            torch.save(model.state_dict(), weights_path)
+            print(f"Saved best model with loss: {best_loss:.4f}")
+
+def eval_autoencoder(model, data_loader, ids, embeddings_path, device):
+    model.eval()  # Переводим модель в режим оценки
+
+    os.makedirs(embeddings_path, exist_ok=True)  # Создаем директорию, если ее нет
+
+    with torch.no_grad():
+        for idx, inputs in tqdm(enumerate(data_loader), total=len(data_loader)):
+            inputs = inputs.to(device).to(torch.float32)
+            _, outputs = model(inputs)
+            
+            # Конвертируем тензор в numpy и сохраняем как .npy файл
+            output_numpy = outputs.cpu().numpy()
+            file_path = os.path.join(embeddings_path, f'{ids[idx]}.npy')
+            np.save(file_path, output_numpy)  # Сохраняем массив как .npy
+
+    print(f'Saved embedding to {embeddings_path}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a video autoencoder with embeddings.")
@@ -133,6 +170,9 @@ if __name__ == "__main__":
     parser.add_argument('--num_frames', type=int, default=16, help="Number of frames per video")
     parser.add_argument('--num_epochs', type=int, default=20, help="Number of training epochs")
     parser.add_argument('--learning_rate', type=float, default=1e-3, help="Learning rate for the optimizer")
+    parser.add_argument('--weights_path', type=str, required=True, help="Path to save the best model weights")
+    parser.add_argument('--embeddings_path', type=str, required=True, help="Path to save embeddings")
+    parser.add_argument('--model_state', type=str, default="train", required=True, help="Train or inference")
     args = parser.parse_args()
 
     # Параметры
@@ -151,16 +191,25 @@ if __name__ == "__main__":
             with torch.cuda.amp.autocast():
                 out = encoder.encode(batch)[0]
             embeddings.append(out.cpu())
+    
+    del encoder
 
     # Объединяем эмбеддинги в один тензор
     embeddings = torch.cat(embeddings, dim=0)
 
     embedding_dataset = EmbeddingDataset(embeddings)
-    embedding_loader = DataLoader(embedding_dataset, batch_size=args.batch_size, shuffle=True)
+    if args.model_state == 'train':
+        embedding_loader = DataLoader(embedding_dataset, batch_size=args.batch_size, shuffle=True)
+    elif args.model_state == 'inference':
+        embedding_loader = DataLoader(embedding_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Инициализация автоэнкодера
     num_frames, hid_dim = embeddings.shape[1], embeddings.shape[2]
-    model = VideoAutoencoder(num_frames=num_frames, hid_dim=hid_dim).to(device)
+    model = UNet3D(in_channels=5, out_channels=1, base_filters=32).to(device)
+    model = model.to(torch.float32)
 
-    # Обучение автоэнкодера
-    train_autoencoder(model, embedding_loader, num_epochs=args.num_epochs, learning_rate=args.learning_rate, device=device)
+    if args.model_state == 'train':
+        train_autoencoder(model, embedding_loader, num_epochs=args.num_epochs, learning_rate=args.learning_rate, device=device, weights_path=args.weights_path)
+    elif args.model_state == 'inference':
+        model.load_state_dict(torch.load(args.weights_path, map_location=device))
+        eval_autoencoder(model=model, data_loader=embedding_loader, ids=dataset.video_ids, device=device, embeddings_path=args.embeddings_path)
