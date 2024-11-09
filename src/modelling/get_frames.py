@@ -8,23 +8,15 @@ def extract_frames_ffmpeg(video_path, output_dir, num_frames=16, frame_size=(224
     # Get video ID from the filename (without extension)
     video_id = os.path.splitext(os.path.basename(video_path))[0]
 
-    if os.path.exists(os.path.join(output_dir, video_id)) and len(os.listdir(os.path.join(output_dir, video_id))) == 15:
-        pass
-    else:
+    if not os.path.exists(os.path.join(output_dir, video_id)) or not len(os.listdir(os.path.join(output_dir, video_id))) == 15:
         # Create the output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
         os.makedirs(os.path.join(output_dir, video_id), exist_ok=True)
 
-        command_probe = [
-            "ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", video_path
-        ]
-        result = subprocess.run(command_probe, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        total_duration = float(result.stdout)
-
         # ffmpeg command to extract frames
         command = [
             "ffmpeg", "-i", video_path,
-            "-vf", f"fps={total_duration/num_frames},scale={frame_size[0]}:{frame_size[1]}",
+            "-vf", f"fps=10, scale={frame_size[0]}:{frame_size[1]}",
             "-vsync", "vfr",
             os.path.join(output_dir, video_id, f"%03d.jpg")
         ]

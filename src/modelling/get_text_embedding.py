@@ -18,7 +18,8 @@ def get_text_csv(path_to_csv: str):
     # columns: [id, text]
     df = pd.read_csv(path_to_csv)
 
-    ids = df.iloc[:, 0].values
+    ids = df.index
+    # ids = df.iloc[:, 0].values
     texts = df.iloc[:, 1].values
     return ids, texts
 
@@ -26,12 +27,12 @@ def encode_text(path_to_texts: str,
                 device: str = 'cuda',
                 batch_size: int = 8, 
                 model_id: str = "all-MiniLM-L6-v2", 
-                output_folder: str = 'data/train/', 
-                output_name: str = 'candidates'):
+                output_folder: str = 'data/train/'):
     
     filename, ext = os.path.splitext(os.path.basename(path_to_texts))
     if ext == '.pkl':
         ids, texts = get_text_pickle(path_to_texts)
+        ids = [id_[:-4] for id_ in ids]
     elif ext == '.csv':
         ids, texts = get_text_csv(path_to_texts)
     else:
@@ -47,9 +48,15 @@ def encode_text(path_to_texts: str,
         
     embeddings_matrix = np.vstack(embeddings_list)
 
-    output_path = os.path.join(output_folder, f"{output_name}_embeddings.npy")
-    np.save(output_path, embeddings_matrix)
-    print(f'Matrix saved at path: {output_path}')
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for idx, id_ in enumerate(ids):
+        embedding = embeddings_matrix[idx]
+        output_path = os.path.join(output_folder, f"{id_}.npy")
+        np.save(output_path, embedding)
+
+    print(f'Embeddings saved at path: {output_folder}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Encode texts to embeddings and save as numpy matrix.")
@@ -61,8 +68,6 @@ if __name__ == "__main__":
                         help="Model ID from Hugging Face for sentence embeddings.")
     parser.add_argument("--output_folder", type=str, default="data/train/", 
                         help="Folder where the embeddings matrix will be saved.")
-    parser.add_argument("--output_name", type=str, default="candidates", 
-                        help="Filename (without extension) for the output embeddings matrix.")
 
     args = parser.parse_args()
     # device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -72,5 +77,5 @@ if __name__ == "__main__":
                 device=device, 
                 batch_size=args.batch_size, 
                 model_id=args.model_id, 
-                output_folder=args.output_folder, 
-                output_name=args.output_name)
+                output_folder=args.output_folder
+                )

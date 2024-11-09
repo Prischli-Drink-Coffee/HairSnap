@@ -32,7 +32,9 @@ python3 ./setup/gui_windows.py
 ENV_FILE=".env"
 
 # Ищем строку, начинающуюся с "CHOICE=", и считываем значение после знака "="
-var=$(grep "^CHOICE=" "$ENV_FILE" | cut -d '=' -f2)
+var=$(grep "^CHOICE=" "$ENV_FILE" | cut -d '=' -f2 | tr -d "'\"")
+
+echo "Значение CHOICE из .env: '$var'"
 
 # Запуск соответствующего скрипта на основе значения в temp.txt
 # shellcheck disable=SC2181
@@ -42,36 +44,42 @@ if [ $? -eq 0 ]; then
     if [[ "$0" != "$BASH_SOURCE" ]]; then
         echo "Этот скрипт был запущен двойным кликом."
 
-        case "$var" in
-            "1")
+        case $var in
+            '1')
                 gnome-terminal -- python3 ./src/pipeline/train.py
                 ;;
-            "2")
+            '2')
                 gnome-terminal -- python3 ./src/pipeline/server.py
                 ;;
-            "3")
+            '3')
                 gnome-terminal -- python3 ./src/pipeline/test.py
                 ;;
+            '4')
+                gnome-terminal -- python3 ./src/pipeline/eda.py
+                ;;
             *)
-                echo "Неизвестное значение в temp.txt: $var"
+                echo "Неизвестное значение в env: $var"
                 ;;
         esac
 
     else
         echo "Этот скрипт был запущен из командной строки."
 
-        case "$var" in
-            "1")
+        case $var in
+            '1')
                 python3 ./src/pipeline/train.py
                 ;;
-            "2")
+            '2')
                 python3 ./src/pipeline/server.py
                 ;;
-            "3")
+            '3')
                 python3 ./src/pipeline/test.py
                 ;;
+            '4')
+                python3 ./src/pipeline/eda.py
+                ;;
             *)
-                echo "Неизвестное значение в temp.txt: $var"
+                echo "Неизвестное значение в env: $var"
                 ;;
         esac
     fi

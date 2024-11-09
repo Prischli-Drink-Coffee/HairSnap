@@ -171,12 +171,9 @@ cython_debug/
 /data/
 /main_stuff.py
 /main_stuff.ipynb
-/temp.txt
 /cudnn_windows/
 /public/
 /SQL.txt
-/temp_collector.txt
-/NaRUTagAI_filt/
 /src/metrics/
 /src/weights/
 /src/certs/
@@ -194,3 +191,4 @@ cython_debug/
 /src/images/HireSnap.pptx
 /files/
 /src/script/graph_start function.py
+/pretrained_ckpts

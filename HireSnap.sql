@@ -130,17 +130,6 @@ CREATE TABLE IF NOT EXISTS `users` (
   `role` enum('user','admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Заполнение таблицы `users`
-INSERT IGNORE INTO `users` (`id`, `email`, `password`, `type`, `info_id`, `created_at`, `role`) VALUES
-(1, 'danil@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW(), 'user'),
-(2, 'ksenia@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW(), 'user'),
-(3, 'vlad@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW(), 'user'),
-(4, 'kostya@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'candidate', NULL, NOW(), 'user'),
-(5, 'egor@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW(), 'user'),
-(6, 'vasiliy@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW(), 'user'),
-(7, 'natasha@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW(), 'user'),
-(8, 'masha@edu.hse.ru', '$2a$12$4HS1SrrhraEbJxS8JOhdmeLzTY87pFOFmjh9mUSI5jQLliTDGI7bq', 'employer', NULL, NOW(), 'user');
-
 -- --------------------------------------------------------
 
 --
@@ -169,19 +158,6 @@ CREATE TABLE IF NOT EXISTS `vacancies` (
   `skill` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `embedding_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Заполнение таблицы `vacancies` с примерами вакансий
-INSERT IGNORE INTO `vacancies` (`id`, `name`, `description`, `salary`, `skill`, `embedding_id`) VALUES
-(1, 'Программист Python', 'Разработка и поддержка веб-приложений на Python, написание REST API', '80000, 90000', 'Python, Django, REST API, SQL', NULL),
-(2, 'Frontend-разработчик', 'Создание интерфейсов для веб-приложений, работа с дизайнерами', '75000, 85000', 'JavaScript, HTML, CSS, React', NULL),
-(3, 'Аналитик данных', 'Сбор и анализ данных для бизнес-отчетности, построение визуализаций', '70000, 80000', 'SQL, Power BI, Excel', NULL),
-(4, 'Инженер по машинному обучению', 'Разработка и обучение ML-моделей, работа с большими данными', '120000, 130000', 'Python, TensorFlow, PyTorch, SQL', NULL),
-(5, 'DevOps инженер', 'Поддержка CI/CD, настройка серверной инфраструктуры, автоматизация процессов', '110000, 120000', 'Docker, Kubernetes, CI/CD, Linux', NULL),
-(6, 'Менеджер проекта', 'Координация проектов, взаимодействие с командами разработки и заказчиками', '90000, 100000', 'Project Management, Agile, Scrum', NULL),
-(7, 'Бизнес-аналитик', 'Анализ требований, написание технической документации, работа с заказчиками', '85000, 90000', 'UML, BPMN, SQL, Excel', NULL),
-(8, 'Специалист по кибербезопасности', 'Разработка и поддержка систем безопасности, анализ угроз', '100000, 110000', 'Cybersecurity, Linux, Python, Firewalls', NULL),
-(9, 'Системный администратор', 'Поддержка серверов и сетевой инфраструктуры, администрирование ОС', '70000, 80000', 'Linux, Windows Server, Bash, Networking', NULL),
-(10, 'Full-stack разработчик', 'Разработка фронтенда и бэкенда веб-приложений', '95000, 100000', 'JavaScript, Node.js, React, SQL', NULL);
 
 --
 -- Индексы сохранённых таблиц

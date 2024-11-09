@@ -34,7 +34,7 @@ class CreateSQL:
             for file in os.listdir(self.path_to_data):
                 if file.endswith('.csv'):
                     table_name = file.split('.')[0]
-                    if table_name not in ['mbti', 'taro']:
+                    if table_name not in ['personality', 'taro']:
                         log.warning(f"Не найдена таблица {table_name}")
                         continue
                     else:
@@ -69,7 +69,7 @@ class CreateSQL:
                     # Преобразование DataFrame в кортежи для вставки
                     data = [tuple(row) for row in table.values]
 
-                    if table_name == 'mbti':
+                    if table_name == 'personality':
                         cursor.executemany(
                             "INSERT INTO `personalities` (`name`, `description`) VALUES (%s, %s)",
                             data
