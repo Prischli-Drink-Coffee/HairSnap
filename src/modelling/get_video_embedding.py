@@ -158,6 +158,7 @@ def eval_autoencoder(model, data_loader, ids, embeddings_path, device):
             
             # Конвертируем тензор в numpy и сохраняем как .npy файл
             output_numpy = outputs.cpu().numpy()
+            output_numpy = output_numpy / np.linalg.norm(output_numpy, axis=1, keepdims=True)
             file_path = os.path.join(embeddings_path, f'{ids[idx]}.npy')
             np.save(file_path, output_numpy)  # Сохраняем массив как .npy
 

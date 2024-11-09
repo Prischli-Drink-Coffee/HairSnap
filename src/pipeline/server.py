@@ -9,11 +9,12 @@ from src.utils.log_debugging import debug_ex, debug_err, debug_info
 from fastapi.staticfiles import StaticFiles
 from env import Env
 from src import path_to_project
+from datetime import datetime
 from src.database.models import (Users, TokenInfo, Auth, Personalities, PersonalityVacancies, Magics, Embeddings,
-                                 Files, InfoCandidates, Vacancies, CandidateVacancies, PersonalityCandidates)
+                                 Files, InfoCandidates, Vacancies, CandidateVacancies, PersonalityCandidates, GenderUser)
 from src.services import (auth_services, user_services, info_candidate_services, magic_services, personality_services,
                           personality_vacancy_services, candidate_vacancy_services, file_services, embedding_services,
-                          vacancy_services, personality_candidate_services)
+                          vacancy_services, personality_candidate_services, main_services)
 from src.utils.jwt_bearer import JWTBearer
 from jwt import InvalidTokenError
 
@@ -22,12 +23,12 @@ log = setup_logging()
 
 
 app_server = FastAPI(title="API - server")
-# app_public = FastAPI(title="API - public")
+app_public = FastAPI(title="API - public")
 
 app = FastAPI()
 
 app.mount("/server", app_server)
-# app.mount("/public", app_public)
+app.mount("/public", app_public)
 app.mount("/data", StaticFiles(directory=os.path.join(path_to_project(), "data")), name="data")
 
 app.add_middleware(
@@ -40,9 +41,9 @@ app.add_middleware(
 
 
 # Определяем теги
-# PublicMainTag = OpenApiTag(name="Main", description="CRUD operations main")
-# ServerMainTag = OpenApiTag(name="Main", description="CRUD operations main")
-ServerAuthTag = OpenApiTag(name="Auth", description="CRUD operations auth")
+PublicMainTag = OpenApiTag(name="Main", description="CRUD operations main")
+ServerMainTag = OpenApiTag(name="Main", description="CRUD operations main")
+# ServerAuthTag = OpenApiTag(name="Auth", description="CRUD operations auth")
 ServerUserTag = OpenApiTag(name="User", description="CRUD operations user")
 ServerInfoCandidateTag = OpenApiTag(name="InfoCandidate", description="CRUD operations info candidate")
 ServerMagicTag = OpenApiTag(name="Magic", description="CRUD operations magic")
@@ -57,8 +58,8 @@ ServerEmbeddingTag = OpenApiTag(name="Embedding", description="CRUD operations e
 
 # Настройка документации с тегами
 app_server.openapi_tags = [
-    # ServerMainTag.model_dump(),
-    ServerAuthTag.model_dump(),
+    ServerMainTag.model_dump(),
+    # ServerAuthTag.model_dump(),
     ServerUserTag.model_dump(),
     ServerInfoCandidateTag.model_dump(),
     ServerMagicTag.model_dump(),
@@ -71,13 +72,13 @@ app_server.openapi_tags = [
     ServerEmbeddingTag.model_dump(),
 ]
 
-# app_public.openapi_tags = [
-#     PublicMainTag.model_dump(),
-# ]
+app_public.openapi_tags = [
+    PublicMainTag.model_dump(),
+]
 
 
 
-@app_server.post("/signup/", response_model=TokenInfo, tags=["Auth"])
+@app_server.post("/signup/", response_model=TokenInfo, tags=["Main"])
 async def signup(email: str = Form(...),
                  password: str = Form(...),
                  type_user: str = Form(...),
@@ -94,7 +95,7 @@ async def signup(email: str = Form(...),
         raise ex
 
 
-@app_server.post("/signin/", response_model=TokenInfo, tags=["Auth"])
+@app_server.post("/signin/", response_model=TokenInfo, tags=["Main"])
 async def signin(email: str = Form(...),
                  password: str = Form(...)):
     """
@@ -107,39 +108,108 @@ async def signin(email: str = Form(...),
         raise ex
 
 
-@app.post("/auth_refresh_jwt/", response_model=TokenInfo, response_model_exclude_none=True,
-          dependencies=[Depends(JWTBearer(access_level=1))], tags=["Auth"])
-async def auth_refresh_jwt(user: Users = Depends(auth_services.UserGetFromToken("refresh_token_type"))):
+@app_server.post("/upload_video/inference/user", response_model=Dict, tags=["Main"],
+                 dependencies=[Depends(JWTBearer(access_level=0))])
+async def upload_video(file: UploadFile = File(...),
+                       name: int = Form(None),
+                       phone: str = Form(None),
+                       date_birth: datetime = Form(None),
+                       gender: GenderUser = Form(None)):
     """
-    Route for refresh jwt access token.
-
-    :param token: valid refresh token. [Str]
-
-    :return: response model TokenInfo.
+    Загрузка видео и получение профиля кандидата
     """
     try:
-        return auth_services.auth_refresh_jwt(user)
+        return await main_services.upload_video(file,
+                                                name,
+                                                phone,
+                                                date_birth,
+                                                gender)
     except HTTPException as ex:
-        log.exception(f"Error {ex}")
+        log.exception(f"Error", exc_info=ex)
         raise ex
 
 
-@app.get("/get_current_auth_user/", response_model=Users,
-         dependencies=[Depends(JWTBearer(access_level=1))],
-         tags=["Auth"])
-async def get_current_auth_user(user: Users = Depends(auth_services.UserGetFromToken("access_token_type"))):
+@app_server.post("/upload_vacancy/inference/employer", response_model=Dict, tags=["Main"],
+                 dependencies=[Depends(JWTBearer(access_level=0))])
+async def upload_vacancy(name: int = Form(...),
+                         description: str = Form(...),
+                         salary: datetime = Form(None),
+                         skill: str = Form(None)):
     """
-    Route for getting auth user.
-
-    :param token: valid token. [Str]
-
-    :return: response model User.
+    Добавление вакансии нанимателем
     """
     try:
-        return user
+        return await main_services.upload_vacancy(name,
+                                                  description,
+                                                  salary,
+                                                  skill)
     except HTTPException as ex:
-        log.exception(f"Error {ex}")
+        log.exception(f"Error", exc_info=ex)
         raise ex
+
+
+@app_server.get("/get_all_vacancies/inference/candidate/{user_id}", response_model=Dict, tags=["Main"],
+                 dependencies=[Depends(JWTBearer(access_level=0))])
+async def get_all_vacancies(user_id: int):
+    """
+    Получение всех рекомендованных пользователю вакансий
+    """
+    try:
+        return main_services.get_all_vacancies(user_id)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+@app_server.get("/get_all_candidates/inference/vacancy/{vacancy_id}", response_model=Dict, tags=["Main"],
+                 dependencies=[Depends(JWTBearer(access_level=0))])
+async def get_all_candidataes(vacancy_id: int):
+    """
+    Получение всех рекомендованных нанимателю кандидатов
+    """
+    try:
+        return main_services.get_all_vacancies(vacancy_id)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+# @app_server.post("")
+        
+
+# @app.post("/auth_refresh_jwt/", response_model=TokenInfo, response_model_exclude_none=True,
+#           dependencies=[Depends(JWTBearer(access_level=1))], tags=["Auth"])
+# async def auth_refresh_jwt(user: Users = Depends(auth_services.UserGetFromToken("refresh_token_type"))):
+#     """
+#     Route for refresh jwt access token.
+
+#     :param token: valid refresh token. [Str]
+
+#     :return: response model TokenInfo.
+#     """
+#     try:
+#         return auth_services.auth_refresh_jwt(user)
+#     except HTTPException as ex:
+#         log.exception(f"Error {ex}")
+#         raise ex
+
+
+# @app.get("/get_current_auth_user/", response_model=Users,
+#          dependencies=[Depends(JWTBearer(access_level=1))],
+#          tags=["Auth"])
+# async def get_current_auth_user(user: Users = Depends(auth_services.UserGetFromToken("access_token_type"))):
+#     """
+#     Route for getting auth user.
+
+#     :param token: valid token. [Str]
+
+#     :return: response model User.
+#     """
+#     try:
+#         return user
+#     except HTTPException as ex:
+#         log.exception(f"Error {ex}")
+#         raise ex
 
 
 @app_server.get("/users/", response_model=list[Users], tags=["User"])
@@ -255,7 +325,8 @@ async def get_all_info_candidates():
         raise ex
 
 
-@app_server.get("/info_candidates/info_candidate_id/{info_candidate_id}", response_model=InfoCandidates)
+@app_server.get("/info_candidates/info_candidate_id/{info_candidate_id}", response_model=InfoCandidates,
+        tags=["InfoCandidate"])
 async def get_info_candidate_by_id(info_candidate_id: int):
     """
     Route for get info candidate by InfoCandidateID.
@@ -501,7 +572,8 @@ async def get_all_personalities():
         raise ex
 
 
-@app_server.get("/personalities/personality_id/{personality_id}", response_model=Personalities)
+@app_server.get("/personalities/personality_id/{personality_id}", response_model=Personalities,
+        tags=["Personality"])
 async def get_personality_by_id(personality_id: int):
     """
     Route for get personality by PersonalityID.
@@ -1022,3 +1094,10 @@ if __name__ == "__main__":
     # Запуск сервера
     log.info("Start run server")
     run_server()
+
+    # Первая прогонка данных
+    try:
+        from src.services.main_services import similarity_start
+        similarity_start()
+    except Exception as ex:
+        log.error("Error", exc_info=ex)

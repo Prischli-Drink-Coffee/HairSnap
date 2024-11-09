@@ -14,18 +14,23 @@ def get_text_pickle(path_to_pickle: str):
     texts = np.array(list(transcription.values()))
     return candidates, texts
 
-def get_text_csv(path_to_csv: str):
+def get_text_csv(path_to_csv: str, candidates: bool):
     # columns: [id, text]
     df = pd.read_csv(path_to_csv)
 
-    # ids = df.index
-    ids = df.iloc[:, 0].values
+    if candidates:
+        ids = df.iloc[:, 0].values
+    else:
+        ids = df.index
+        ids = [1 + id_ for id_ in ids]
+
     texts = df.iloc[:, 1].values
     return ids, texts
 
 def encode_text(path_to_texts: str, 
                 device: str = 'cuda',
-                batch_size: int = 8, 
+                batch_size: int = 8,
+                candidates: bool = True,
                 model_id: str = "all-MiniLM-L6-v2", 
                 output_folder: str = 'data/train/'):
     
@@ -34,7 +39,7 @@ def encode_text(path_to_texts: str,
         ids, texts = get_text_pickle(path_to_texts)
         ids = [id_[:-4] for id_ in ids]
     elif ext == '.csv':
-        ids, texts = get_text_csv(path_to_texts)
+        ids, texts = get_text_csv(path_to_texts, candidates=candidates)
     else:
         raise ValueError('path_to_texts should be .csv or .pkl format')
     
@@ -44,6 +49,8 @@ def encode_text(path_to_texts: str,
     for i in tqdm(range(0, len(texts), batch_size), desc="Encoding batches..."):
         batch = texts[i:i + batch_size].tolist()  # `SentenceTransformer.encode` expects a list of strings
         embeddings = model.encode(batch, device=device, convert_to_tensor=True)
+        # normalize embeddings
+        embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
         embeddings_list.append(embeddings.cpu().numpy())  # Переводим на CPU и сохраняем как numpy
         
     embeddings_matrix = np.vstack(embeddings_list)
@@ -68,6 +75,7 @@ if __name__ == "__main__":
                         help="Model ID from Hugging Face for sentence embeddings.")
     parser.add_argument("--output_folder", type=str, default="data/train/", 
                         help="Folder where the embeddings matrix will be saved.")
+    parser.add_argument('--disable_candidates', action='store_false', help="Отключить функцию (False, если флаг указан)")
 
     args = parser.parse_args()
     # device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -75,6 +83,7 @@ if __name__ == "__main__":
 
     encode_text(path_to_texts=args.path_to_texts, 
                 device=device, 
+                candidates=args.disable_candidates,
                 batch_size=args.batch_size, 
                 model_id=args.model_id, 
                 output_folder=args.output_folder

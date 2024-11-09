@@ -40,8 +40,6 @@ if %errorlevel% equ 0 (
             cmd /k python.exe ./src/pipeline/server.py
         ) else if %var% == '3' (
             cmd /k pytest ./src/pipeline/test.py
-        ) else if %var% == '4' (
-            cmd /k python.exe ./src/pipeline/eda.py
         ) else (
             echo Not found value: %var%
         )
@@ -53,8 +51,6 @@ if %errorlevel% equ 0 (
             python.exe ./src/pipeline/server.py
         ) else if %var% == '3' (
             pytest ./src/pipeline/test.py
-        ) else if %var% == '4' (
-            python.exe ./src/pipeline/eda.py
         ) else (
             echo Not found value: %var%
         )

@@ -7,10 +7,9 @@ from torchvision import transforms
 from PIL import Image
 from sentence_transformers import SentenceTransformer
 from cosmos_tokenizer.video_lib import CausalVideoTokenizer
-
-from src.stuff.video_to_text import load_models, video2audio, audio2text
+from src.modelling.video_to_text import load_models, video2audio, audio2text
 from src.modelling.get_frames import extract_frames_ffmpeg
-from get_video_embedding import UNet3D
+from src.modelling.get_video_embedding import UNet3D
 
 def get_user_embedding(video_path, 
                        unet_weights_path: str = 'src/weights/Unet3D.pth', 
@@ -70,12 +69,15 @@ def get_user_embedding(video_path,
     text_embedding = bert.encode(predicted_sentence, device=device, convert_to_tensor=True).cpu().numpy()
 
     # 7. Итоговое представление кандидата
+    video_embedding = video_embedding / np.linalg.norm(video_embedding, keepdims=True)
+    text_embedding = text_embedding / np.linalg.norm(text_embedding, keepdims=True)
     embedding = (text_embedding + video_embedding) / 2
-    print(embedding.shape)
 
     if output_embedding_path is not None:
         np.save(output_embedding_path, embedding)
         print(f"Saved embedding to {output_embedding_path}")
+    
+    return embedding
 
 video_path = 'data/train/video/zyGz_H1UTnQ.003.mp4'
 
