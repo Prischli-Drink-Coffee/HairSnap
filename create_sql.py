@@ -3,6 +3,8 @@ import pymysql
 from src.utils.custom_logging import setup_logging
 from env import Env
 from pandas import read_csv
+import numpy as np
+import pandas as pd
 
 env = Env()
 log = setup_logging()
@@ -26,6 +28,32 @@ class CreateSQL:
             cursorclass=pymysql.cursors.DictCursor
         )
 
+    @staticmethod
+    def remove_column_from_csv(df):
+        # Проходим по всем файлам в указанной директории                
+        try:
+            # Чтение CSV файла в DataFrame
+            df = df.replace({pd.NA: None, np.nan: None})
+            column_name1='Unnamed: 0.1'
+            column_name2='Unnamed: 0'
+            column_name3='Unnamed: 0.2'
+            # Проверяем, существует ли столбец с нужным названием
+            if column_name1 in df.columns:
+                if column_name2 in df.columns:
+                    if column_name3 in df.columns:
+                        # Удаляем столбец
+                        df = df.drop(columns=[column_name1])
+                        df = df.drop(columns=[column_name2])
+                        df = df.drop(columns=[column_name3])
+                # Сохраняем обновленный DataFrame обратно в CSV
+                print(f"Столбец удален из датафрейма")
+                return df
+            else:
+                log.error(f"Столбец не найден в датафрейме")
+                return df
+        except Exception as e:
+            log.exception(f"Ошибка при обработке датафрейме: {e}")
+
     def read_sql(self):
         try:
 
@@ -34,7 +62,7 @@ class CreateSQL:
             for file in os.listdir(self.path_to_data):
                 if file.endswith('.csv'):
                     table_name = file.split('.')[0]
-                    if table_name not in ['embeddings', 'files', 'info_candidates', 'ocean', 'users', 'vacancies']:
+                    if table_name not in ['embeddings', 'files', 'personalities', 'users', 'info_candidates', 'vacancies']:
                         log.warning(f"Не найдена таблица {table_name}")
                         continue
                     else:
@@ -64,51 +92,25 @@ class CreateSQL:
                             log.warning("SQL Warning: %s", exc_info=e)
                             # Логирование неудачных запросов может помочь в отладке
 
-                # Записываем таблицы в базу данных
+                # Вставка данных из загруженных CSV таблиц
                 for table_name, table in tables.items():
-                    # Преобразование DataFrame в кортежи для вставки
-                    data = [tuple(row) for row in table.values]
+                    table = self.remove_column_from_csv(table)
+                    # Получаем имена столбцов и формируем плейсхолдеры
+                    columns = ', '.join(table.columns)
+                    placeholders = ', '.join(['%s'] * len(table.columns))
+                    sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
-                    if table_name == 'ocean':
-                        cursor.executemany(
-                            "INSERT IGNORE INTO `personalities` (`name`, `description`, `embedding_id`) VALUES (%s, %s, %s)",
-                            data
-                        )
-                        log.info(f"Inserted data into personalities table from {table_name}.csv")
-                    # elif table_name == 'embeddings':
-                    #     cursor.executemany(
-                    #         "INSERT IGNORE INTO `embeddings` (`url`) VALUES (%s)",
-                    #         data
-                    #     )
-                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
-                    # elif table_name == 'files':
-                    #     cursor.executemany(
-                    #         "INSERT IGNORE INTO `files` (`url`) VALUES (%s)",
-                    #         data
-                    #     )
-                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
-                    # elif table_name == 'info_candidates':
-                    #     cursor.executemany(
-                    #         "INSERT IGNORE INTO `info_candidates` (`name`, `phone`, `gender`, `date_birth`,"
-                    #         " `file_id`, `embedding_id`) VALUES (%s, %s, %s, %s, %s, %s)",
-                    #         data
-                    #     )
-                    # elif table_name == 'users':
-                    #     cursor.executemany(
-                    #         "INSERT IGNORE INTO `users` (`email`, `password`, `type`, `info_id`,"
-                    #         " `created_at`, `role`) VALUES (%s, %s, %s, %s, %s, %s)",
-                    #         data
-                    #     )
-                    # elif table_name == 'vacancies':
-                    #     cursor.executemany(
-                    #         "INSERT IGNORE INTO `vacancies` (`name`, `description`, `salary`, `skill`,"
-                    #         " `embedding_id`) VALUES (%s, %s, %s, %s, %s)",
-                    #         data
-                    #     )
-                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
-                    # else:
-                    #     log.warning(f"Не найдена таблица {table_name}")
-                    #     continue
+                    # Преобразуем DataFrame в список кортежей
+                    data_tuples = [tuple(row) for row in table.to_numpy()]
+
+                    # Выполняем вставку
+                    try:
+                        with self.connection.cursor() as cursor:
+                            cursor.executemany(sql, data_tuples)
+                        self.connection.commit()
+                    except Exception as e:
+                        self.connection.rollback()
+                        log.warning("Ошибка при вставке данных в таблицу %s: %s", table_name, e)
 
                 self.connection.commit()
                 log.info("Database was created and SQL script executed successfully")

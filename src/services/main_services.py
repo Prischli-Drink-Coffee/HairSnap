@@ -232,6 +232,7 @@ def upload_vacancy(name,
                    description,
                    salary,
                    skill):
+    
 
     return {"message": "test"}
     
