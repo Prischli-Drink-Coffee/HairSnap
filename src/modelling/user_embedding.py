@@ -12,6 +12,9 @@ from src.modelling.video_to_text import load_models, video2audio, audio2text
 from src.modelling.get_frames import extract_frames_ffmpeg
 from src.modelling.get_video_embedding import UNet3D
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def get_user_embedding(video_path, 
                        unet_weights_path: str = 'src/weights/Unet3D.pth', 
                        output_embedding_path: str = None, 
@@ -77,6 +80,7 @@ def get_user_embedding(video_path,
     
     if os.path.exists(audio_temp_folder):
         shutil.rmtree(audio_temp_folder)
+
     # и удаляем картинки
     if os.path.exists(frames_temp_folder):
         shutil.rmtree(frames_temp_folder)

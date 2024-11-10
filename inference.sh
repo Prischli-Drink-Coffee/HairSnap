@@ -10,33 +10,35 @@ fi
 MAIN_FOLDER=$1
 
 # Поддиректории и файлы
-VIDEO_FOLDER="$MAIN_FOLDER/video"
+VIDEO_FOLDER="$MAIN_FOLDER/test_data"
+VACANCIES_TABLE="data/tables/vacancies.csv"
+VACANCIES_FOLDER="$MAIN_FOLDER/vacancies"
+PERSONALITY_TABLE="data/tables/personalities.csv"
+PERSONALITY_FOLDER="$MAIN_FOLDER/personalities"
 FRAMES_FOLDER="$MAIN_FOLDER/frames"
 TEMP_AUDIO_FOLDER="$MAIN_FOLDER/temp_audio"
 TRANSCRIPTION_PATH="$MAIN_FOLDER/transcription_speech.csv"
 USERS_FOLDER="$MAIN_FOLDER/users"
-VACANCIES_FOLDER="$MAIN_FOLDER/vacancies"
-PERSONALITY_FOLDER="$MAIN_FOLDER/personalities"
-SUBMIT_OUTPUT="$MAIN_FOLDER/submit_results.pkl"
+SUBMIT_OUTPUT="$MAIN_FOLDER/ocean_results.pkl"
 MBTI_OUTPUT="$MAIN_FOLDER/mbti_results.pkl"
 
 # Создаем необходимые директории
-mkdir -p "$TEMP_AUDIO_FOLDER" "$USERS_FOLDER" "$PERSONALITY_FOLDER" "$VACANCIES_FOLDER" "$PERSONALITY_EMBEDDINGS_FOLDER"
+# mkdir -p "$TEMP_AUDIO_FOLDER" "$USERS_FOLDER" "$PERSONALITY_FOLDER" "$VACANCIES_FOLDER" "$PERSONALITY_EMBEDDINGS_FOLDER"
 
 # Шаг 1: Получение текстовых эмбеддингов
 echo "Step 1: Extracting audio, transcribing, and generating text embeddings..."
 
 # Транскрибируем видео и сохраняем текст
-python src/modelling/video_to_text.py --video_folder_path "$VIDEO_FOLDER" --table_path "$TRANSCRIPTION_PATH" --audio_folder "$TEMP_AUDIO_FOLDER"
+# python src/modelling/video_to_text.py --video_folder_path "$VIDEO_FOLDER" --table_path "$TRANSCRIPTION_PATH" --audio_folder "$TEMP_AUDIO_FOLDER"
 
 # Генерация текстовых эмбеддингов для кандидатов
-python src/modelling/get_text_embedding.py --path_to_texts "$TRANSCRIPTION_PATH" --output_folder "$USERS_FOLDER/text_embeddings"
+# python src/modelling/get_text_embedding.py --path_to_texts "$TRANSCRIPTION_PATH" --output_folder "$USERS_FOLDER/text_embeddings"
 
 # Генерация текстовых эмбеддингов для вакансий
-python src/modelling/get_text_embedding.py --path_to_texts "$VACANCIES_FOLDER/vacancies.csv" --output_folder "$VACANCIES_FOLDER/embeddings" --disable_candidates
+# python src/modelling/get_text_embedding.py --path_to_texts "$VACANCIES_TABLE" --output_folder "$VACANCIES_FOLDER/embeddings" --disable_candidates
 
 # Генерация текстовых эмбеддингов для OCEAN (личностных черт)
-python src/modelling/get_text_embedding.py --path_to_texts "$PERSONALITY_FOLDER/personality.csv" --output_folder "$PERSONALITY_FOLDER/embeddings" --disable_candidates
+python src/modelling/get_text_embedding.py --path_to_texts "$PERSONALITY_TABLE" --output_folder "$PERSONALITY_FOLDER/embeddings" --disable_candidates
 
 # Шаг 2: Получение видео эмбеддингов
 echo "Step 2: Generating video embeddings..."

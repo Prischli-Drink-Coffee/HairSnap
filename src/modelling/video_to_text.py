@@ -7,7 +7,17 @@ import pandas as pd
 import torch
 import torchaudio
 from moviepy.editor import VideoFileClip
+import moviepy.config as mpy_config
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import logging
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
+# Отключаем логи moviepy
+mpy_config.change_settings({"logger": None})
 
 def video2audio(path_to_video: str, audio_folder: str):
     """Convert .mp4 to .wav"""
@@ -18,7 +28,7 @@ def video2audio(path_to_video: str, audio_folder: str):
     audio_path = os.path.join(audio_folder, f"{filename}.wav")
 
     clip = VideoFileClip(path_to_video)
-    clip.audio.write_audiofile(audio_path, codec='pcm_s16le')
+    clip.audio.write_audiofile(audio_path, codec='pcm_s16le', verbose=False, logger=None)
 
     return audio_path
 

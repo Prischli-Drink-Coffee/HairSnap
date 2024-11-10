@@ -2,6 +2,8 @@ import os
 import subprocess
 import argparse
 from tqdm import tqdm
+import warnings
+warnings.filterwarnings("ignore")
 
 def extract_frames_ffmpeg(video_path, output_dir, num_frames=16, frame_size=(224, 224)):
     # Get video ID from the filename (without extension)
@@ -19,7 +21,7 @@ def extract_frames_ffmpeg(video_path, output_dir, num_frames=16, frame_size=(224
         #     "-vsync", "vfr",
         #     os.path.join(output_dir, video_id, f"%03d.jpg")
         # ]
-        command = f'ffmpeg -i {video_path} -vf fps=10,scale={frame_size[0]}:{frame_size[1]} -vsync vfr {os.path.join(output_dir, video_id, f"%03d.jpg")}'
+        command = f'ffmpeg -i {video_path} -loglevel quiet -vf fps=10,scale={frame_size[0]}:{frame_size[1]} -vsync vfr {os.path.join(output_dir, video_id, f"%03d.jpg")}'
         
         # Run the command
         subprocess.run(command, shell=True)

@@ -3,6 +3,8 @@ import argparse
 import numpy as np
 import pandas as pd
 import pickle
+import warnings
+warnings.filterwarnings("ignore")
 
 from src.modelling.submit import compute_similarity_matrix, compute_pearson_matrix
 

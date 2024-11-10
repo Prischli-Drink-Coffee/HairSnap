@@ -11,6 +11,9 @@ from PIL import Image
 from tqdm import tqdm
 from cosmos_tokenizer.video_lib import CausalVideoTokenizer
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # Датасет для CausalVideoTokenizer
 class VideoFrameDataset(Dataset):
     def __init__(self, data_dir, num_frames=16):

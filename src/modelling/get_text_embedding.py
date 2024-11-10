@@ -6,6 +6,9 @@ import numpy as np
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def get_text_pickle(path_to_pickle: str):
     with open(path_to_pickle, 'rb') as file:
         transcription = pickle.load(file)  # {candidate: transcription}

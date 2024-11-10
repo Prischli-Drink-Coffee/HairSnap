@@ -6,6 +6,8 @@ import pickle
 from scipy.stats import pearsonr
 from sklearn.metrics.pairwise import cosine_similarity
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def load_type_embeddings(type_embeddings_folder, threshold=16):
     return np.array([
