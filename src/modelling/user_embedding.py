@@ -37,10 +37,6 @@ def get_user_embedding(video_path,
     
     # Получаем из него вектор размера (1, C, num_frames, H, W)
     video_tensor = torch.stack(frames).unsqueeze(0).permute(0, 2, 1, 3, 4).to(device).to(torch.float32)
-    
-    # и удаляем картинки
-    if os.path.exists(frames_temp_folder):
-        shutil.rmtree(frames_temp_folder)
 
     # 2. Пропускаем вектор видео через CosmosTokenizer -> получаем матричное сжатое представление размера (1, num_frames, 5, 28, 28)
     encoder = CausalVideoTokenizer(checkpoint_enc="pretrained_ckpts/Cosmos-Tokenizer-CV4x8x8/encoder.jit").to(device)
@@ -65,8 +61,6 @@ def get_user_embedding(video_path,
                                     processor=processor, model=model, 
                                     device=device, save_table=False)
     
-    if os.path.exists(audio_temp_folder):
-        shutil.rmtree(audio_temp_folder)
     
     # 6. Получаем текстовый эмбеддинг
     bert = SentenceTransformer("all-MiniLM-L6-v2").to(device)
@@ -80,6 +74,12 @@ def get_user_embedding(video_path,
     if output_embedding_path is not None:
         np.save(output_embedding_path, embedding)
         print(f"Saved embedding to {output_embedding_path}")
+    
+    if os.path.exists(audio_temp_folder):
+        shutil.rmtree(audio_temp_folder)
+    # и удаляем картинки
+    if os.path.exists(frames_temp_folder):
+        shutil.rmtree(frames_temp_folder)
     
     return embedding
 

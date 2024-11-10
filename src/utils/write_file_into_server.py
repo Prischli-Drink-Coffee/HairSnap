@@ -22,8 +22,6 @@ async def write_file_into_server(name_object: str, file):
 
 
 def write_embedding_into_server(name_object: str, embedding: np.array):
-    # Преобразуем в нампай эррей
-    embedding = embedding.cpu().numpy()
     # Создаем уникальное имя файла
     unique_embedding = f"{uuid.uuid4()}.npy"
     # Сохраняем файл на сервер

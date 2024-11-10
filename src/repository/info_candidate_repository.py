@@ -20,7 +20,7 @@ def create_info_candidate(info_candidate: InfoCandidates):
     query = ("INSERT INTO info_candidates (name, phone, gender,"
              " date_birth, file_id, embedding_id)"
              " VALUES (%s, %s, %s, %s, %s, %s)")
-    params = (info_candidate.Name, info_candidate.Phone, info_candidate.Gender.value,
+    params = (info_candidate.Name, info_candidate.Phone, info_candidate.Gender,
               info_candidate.DateBirth, info_candidate.FileID, info_candidate.EmbeddingID)
     cursor = db.execute_query(query, params)
     return cursor.lastrowid

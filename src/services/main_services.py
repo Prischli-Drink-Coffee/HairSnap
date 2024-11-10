@@ -191,7 +191,7 @@ async def upload_video(file,
     # Загружаем видео на сервер
     unique_file = await write_file_into_server("files", file)
     # Записываем информацию в базу данных
-    file_entity = file_services.create_file(Files(url=f"/files/{unique_file}"))
+    file_entity = file_services.create_file(Files(url=f"data/files/{unique_file}"))
     # Обрабатываем видео для получения эмбендинга
     log.info(file_entity.Url)
     video_embedding = get_user_embedding(file_entity.Url)
@@ -204,14 +204,14 @@ async def upload_video(file,
         name=name,
         phone=phone,
         gender=gender,
-        data_birth=data_birth,
+        date_birth=date_birth,
         file_id=file_entity.ID,
         embedding_id=embedding_entity.ID
     ))
     # Обновить данные профиля
     user = user_services.get_user_by_id(user_id)
     user.InfoID = info_candidate.ID
-    user_services.update_user(user)
+    user_services.update_user(user.ID, user)
     C = similarity_for_user(user.ID)
     print(C)
 
@@ -222,7 +222,8 @@ async def upload_video(file,
         "phone": info_candidate.Phone,
         "gender": info_candidate.Gender.value,
         "date_birth": f"{info_candidate.DateBirth}",
-        "video_url": return_url_object(file_entity.Url)
+        "video_url": return_url_object(file_entity.Url),
+        "C": C.cpu().numpy().to_list()
     }
 
 

@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `info_candidates` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `date_birth` timestamp NULL DEFAULT NULL,
   `file_id` int(11) DEFAULT NULL,
   `embedding_id` int(11) DEFAULT NULL
