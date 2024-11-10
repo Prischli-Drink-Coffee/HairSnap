@@ -42,72 +42,72 @@ def filter_matrix(final_matrix, threshold=0.7):
     return normalized_matrix
 
 
-def similarity_start():
-    # Сперва достаем ембендинги OCEAN из базы данных
-    personalities = personality_services.get_all_personalities()
-    ocean = []
-    for personality in personalities:
-        if personality.Name in ['O', 'C', 'E', 'A', 'N']:
-            ocean.append(np.load(embedding_services.get_embedding_by_id(personality.EmbeddingID).Url))
-    ocean = np.vstack(ocean)
+# def similarity_start():
+#     # Сперва достаем ембендинги OCEAN из базы данных
+#     personalities = personality_services.get_all_personalities()
+#     ocean = []
+#     for personality in personalities:
+#         if personality.Name in ['O', 'C', 'E', 'A', 'N']:
+#             ocean.append(np.load(embedding_services.get_embedding_by_id(personality.EmbeddingID).Url))
+#     ocean = np.vstack(ocean)
 
-    # Получаем все пользователи
-    users = user_services.get_all_users()
-    user_embeddings = []
-    for user in users:
-        info_candidate = info_candidate_services.get_info_candidate_by_id(user.InfoID)
-        user_embeddings.append(np.load(embedding_services.get_embedding_by_id(info_candidate.EmbeddingID)))
-    user_embeddings = np.vstack(user_embeddings)
+#     # Получаем все пользователи
+#     users = user_services.get_all_users()
+#     user_embeddings = []
+#     for user in users:
+#         info_candidate = info_candidate_services.get_info_candidate_by_id(user.InfoID)
+#         user_embeddings.append(np.load(embedding_services.get_embedding_by_id(info_candidate.EmbeddingID)))
+#     user_embeddings = np.vstack(user_embeddings)
 
-    # Получаем все вакансии
-    vacancies = vacancy_services.get_all_vacancies()
-    vacancy_embeddings = []
-    for vacancy in vacancies:
-        vacancy_embeddings.append(np.load(embedding_services.get_embedding_by_id(vacancy.EmbeddingID)))
-    vacancy_embeddings = np.vstack(vacancy_embeddings)
+#     # Получаем все вакансии
+#     vacancies = vacancy_services.get_all_vacancies()
+#     vacancy_embeddings = []
+#     for vacancy in vacancies:
+#         vacancy_embeddings.append(np.load(embedding_services.get_embedding_by_id(vacancy.EmbeddingID)))
+#     vacancy_embeddings = np.vstack(vacancy_embeddings)
 
-    # Строим матрицу сходства
-    a, C, P = build_matrix(user_embeddings, ocean, vacancy_embeddings)
-    b = filter_matrix(a)
+#     # Строим матрицу сходства
+#     a, C, P = build_matrix(user_embeddings, ocean, vacancy_embeddings)
+#     b = filter_matrix(a)
 
-    # Запись данных в таблицу PersonalityCandidates (сходства личности и кандидата)
-    for i, user in enumerate(users):
-        for j, personality in enumerate(personalities):
-            similarity = C[i, j]
-            if similarity >= 0.7:  # Пороговое значение сходства
-                # Создаем запись в базе данных
-                personality_candidate = PersonalityCandidates(
-                    PersonalityID=personality.ID,
-                    UserID=user.ID,
-                    Distance=similarity
-                )
-                personality_candidate_services.create_personality_candidate(personality_candidate)
+#     # Запись данных в таблицу PersonalityCandidates (сходства личности и кандидата)
+#     for i, user in enumerate(users):
+#         for j, personality in enumerate(personalities):
+#             similarity = C[i, j]
+#             if similarity >= 0.7:  # Пороговое значение сходства
+#                 # Создаем запись в базе данных
+#                 personality_candidate = PersonalityCandidates(
+#                     PersonalityID=personality.ID,
+#                     UserID=user.ID,
+#                     Distance=similarity
+#                 )
+#                 personality_candidate_services.create_personality_candidate(personality_candidate)
 
-    # Запись данных в таблицу PersonalityVacancies (сходства личности и вакансии)
-    for i, personality in enumerate(personalities):
-        for j, vacancy in enumerate(vacancies):
-            similarity = P[i, j]
-            if similarity >= 0.7:  # Пороговое значение сходства
-                # Создаем запись в базе данных
-                personality_vacancy = PersonalityVacancies(
-                    PersonalityID=personality.ID,
-                    VacancyID=vacancy.ID,
-                    Distance=similarity
-                )
-                personality_services.create_personality_vacancy(personality_vacancy)
+#     # Запись данных в таблицу PersonalityVacancies (сходства личности и вакансии)
+#     for i, personality in enumerate(personalities):
+#         for j, vacancy in enumerate(vacancies):
+#             similarity = P[i, j]
+#             if similarity >= 0.7:  # Пороговое значение сходства
+#                 # Создаем запись в базе данных
+#                 personality_vacancy = PersonalityVacancies(
+#                     PersonalityID=personality.ID,
+#                     VacancyID=vacancy.ID,
+#                     Distance=similarity
+#                 )
+#                 personality_services.create_personality_vacancy(personality_vacancy)
 
-    # Запись данных в таблицу CandidateVacancies (сходства кандидата и вакансии)
-    for i, user in enumerate(users):
-        for j, vacancy in enumerate(vacancies):
-            similarity = b[i, j]
-            if similarity >= 0.7:  # Пороговое значение сходства
-                # Создаем запись в базе данных
-                candidate_vacancy = CandidateVacancies(
-                    UserID=user.ID,
-                    VacancyID=vacancy.ID,
-                    Distance=similarity
-                )
-                vacancy_services.create_candidate_vacancy(candidate_vacancy)
+#     # Запись данных в таблицу CandidateVacancies (сходства кандидата и вакансии)
+#     for i, user in enumerate(users):
+#         for j, vacancy in enumerate(vacancies):
+#             similarity = b[i, j]
+#             if similarity >= 0.7:  # Пороговое значение сходства
+#                 # Создаем запись в базе данных
+#                 candidate_vacancy = CandidateVacancies(
+#                     UserID=user.ID,
+#                     VacancyID=vacancy.ID,
+#                     Distance=similarity
+#                 )
+#                 vacancy_services.create_candidate_vacancy(candidate_vacancy)
 
 
 
@@ -180,7 +180,7 @@ def similarity_for_user(user_id: int):
 
 
 async def upload_video(file,
-                       user_id: int,
+                       user_id,
                        name,
                        phone,
                        date_birth,
@@ -191,7 +191,7 @@ async def upload_video(file,
     # Загружаем видео на сервер
     unique_file = await write_file_into_server("files", file)
     # Записываем информацию в базу данных
-    file_entity = file_services.create_file(File(url=f"/files/{unique_file}"))
+    file_entity = file_services.create_file(Files(url=f"/files/{unique_file}"))
     # Обрабатываем видео для получения эмбендинга
     log.info(file_entity.Url)
     video_embedding = get_user_embedding(file_entity.Url)
@@ -227,8 +227,13 @@ async def upload_video(file,
 
 
 
-def upload_vacancy():
-    pass
+def upload_vacancy(name,
+                   description,
+                   salary,
+                   skill):
+
+    return {"message": "test"}
+    
 
 
 
@@ -240,7 +245,7 @@ def get_all_vacancies(user_id):
     for smaple in candidate_vacancies:
         if sample.UserID == user_id:
             user_vacancies.append(sample.model_dump())
-    user_vacancies.sort('distance', reverse=True)
+    user_vacancies.sort(reverse=True)
     return user_vacancies
 
 
@@ -252,5 +257,5 @@ def get_all_candidates(vacancy_id):
     for smaple in candidate_vacancies:
         if sample.VacancyID == vacancy_id:
             vacancy_candidates.append(sample.model_dump())
-    vacancy_candidates.sort('distance', reverse=True)
+    vacancy_candidates.sort(reverse=True)
     return vacancy_candidates

@@ -34,7 +34,7 @@ class CreateSQL:
             for file in os.listdir(self.path_to_data):
                 if file.endswith('.csv'):
                     table_name = file.split('.')[0]
-                    if table_name not in ['personality', 'taro']:
+                    if table_name not in ['embeddings', 'files', 'info_candidates', 'ocean', 'users', 'vacancies']:
                         log.warning(f"Не найдена таблица {table_name}")
                         continue
                     else:
@@ -69,22 +69,46 @@ class CreateSQL:
                     # Преобразование DataFrame в кортежи для вставки
                     data = [tuple(row) for row in table.values]
 
-                    if table_name == 'personality':
+                    if table_name == 'ocean':
                         cursor.executemany(
-                            "INSERT INTO `personalities` (`name`, `description`) VALUES (%s, %s)",
+                            "INSERT IGNORE INTO `personalities` (`name`, `description`, `embedding_id`) VALUES (%s, %s, %s)",
                             data
                         )
                         log.info(f"Inserted data into personalities table from {table_name}.csv")
-                    elif table_name == 'taro':
-                        cursor.executemany(
-                            "INSERT INTO `magics` (`name`, `candidate_answer`, `candidate_explanation`,"
-                            " `vacancy_answer`, `vacancy_explanation`) VALUES (%s, %s, %s, %s, %s)",
-                            data
-                        )
-                        log.info(f"Inserted data into magics table from {table_name}.csv")
-                    else:
-                        log.warning(f"Не найдена таблица {table_name}")
-                        continue
+                    # elif table_name == 'embeddings':
+                    #     cursor.executemany(
+                    #         "INSERT IGNORE INTO `embeddings` (`url`) VALUES (%s)",
+                    #         data
+                    #     )
+                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
+                    # elif table_name == 'files':
+                    #     cursor.executemany(
+                    #         "INSERT IGNORE INTO `files` (`url`) VALUES (%s)",
+                    #         data
+                    #     )
+                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
+                    # elif table_name == 'info_candidates':
+                    #     cursor.executemany(
+                    #         "INSERT IGNORE INTO `info_candidates` (`name`, `phone`, `gender`, `date_birth`,"
+                    #         " `file_id`, `embedding_id`) VALUES (%s, %s, %s, %s, %s, %s)",
+                    #         data
+                    #     )
+                    # elif table_name == 'users':
+                    #     cursor.executemany(
+                    #         "INSERT IGNORE INTO `users` (`email`, `password`, `type`, `info_id`,"
+                    #         " `created_at`, `role`) VALUES (%s, %s, %s, %s, %s, %s)",
+                    #         data
+                    #     )
+                    # elif table_name == 'vacancies':
+                    #     cursor.executemany(
+                    #         "INSERT IGNORE INTO `vacancies` (`name`, `description`, `salary`, `skill`,"
+                    #         " `embedding_id`) VALUES (%s, %s, %s, %s, %s)",
+                    #         data
+                    #     )
+                    #     log.info(f"Inserted data into magics table from {table_name}.csv")
+                    # else:
+                    #     log.warning(f"Не найдена таблица {table_name}")
+                    #     continue
 
                 self.connection.commit()
                 log.info("Database was created and SQL script executed successfully")

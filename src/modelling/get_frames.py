@@ -13,15 +13,17 @@ def extract_frames_ffmpeg(video_path, output_dir, num_frames=16, frame_size=(224
         os.makedirs(os.path.join(output_dir, video_id), exist_ok=True)
 
         # ffmpeg command to extract frames
-        command = [
-            "ffmpeg", "-i", video_path,
-            "-vf", f"fps=10, scale={frame_size[0]}:{frame_size[1]}",
-            "-vsync", "vfr",
-            os.path.join(output_dir, video_id, f"%03d.jpg")
-        ]
+        # command = [
+        #     "ffmpeg", "-i", video_path,
+        #     "-vf", f"fps=10, scale={frame_size[0]}:{frame_size[1]}",
+        #     "-vsync", "vfr",
+        #     os.path.join(output_dir, video_id, f"%03d.jpg")
+        # ]
+        command = f'ffmpeg -i {video_path} -vf fps=10,scale={frame_size[0]}:{frame_size[1]} -vsync vfr {os.path.join(output_dir, video_id, f"%03d.jpg")}'
         
         # Run the command
-        subprocess.run(command, check=True)
+        subprocess.run(command, shell=True)
+        # subprocess.run(command, check=True)
 
 
 def process_videos(input_dir, output_dir):

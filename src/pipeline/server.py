@@ -108,18 +108,20 @@ async def signin(email: str = Form(...),
         raise ex
 
 
-@app_server.post("/upload_video/inference/user", response_model=Dict, tags=["Main"],
+@app_server.post("/upload_video/inference/{user_id}", response_model=Dict, tags=["Main"],
                  dependencies=[Depends(JWTBearer(access_level=0))])
-async def upload_video(file: UploadFile = File(...),
-                       name: int = Form(None),
-                       phone: str = Form(None),
-                       date_birth: datetime = Form(None),
-                       gender: GenderUser = Form(None)):
+async def upload_video(user_id: int,
+                       file: UploadFile,
+                       name: str = None,
+                       phone: str = None,
+                       date_birth: datetime = None,
+                       gender: str = None):
     """
     Загрузка видео и получение профиля кандидата
     """
     try:
         return await main_services.upload_video(file,
+                                                user_id,
                                                 name,
                                                 phone,
                                                 date_birth,
@@ -131,24 +133,24 @@ async def upload_video(file: UploadFile = File(...),
 
 @app_server.post("/upload_vacancy/inference/employer", response_model=Dict, tags=["Main"],
                  dependencies=[Depends(JWTBearer(access_level=0))])
-async def upload_vacancy(name: int = Form(...),
+async def upload_vacancy(name: str = Form(...),
                          description: str = Form(...),
-                         salary: datetime = Form(None),
+                         salary: str = Form(None),
                          skill: str = Form(None)):
     """
     Добавление вакансии нанимателем
     """
     try:
-        return await main_services.upload_vacancy(name,
-                                                  description,
-                                                  salary,
-                                                  skill)
+        return main_services.upload_vacancy(name,
+                                            description,
+                                            salary,
+                                            skill)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
 
 
-@app_server.get("/get_all_vacancies/inference/candidate/{user_id}", response_model=Dict, tags=["Main"],
+@app_server.get("/get_all_vacancies/inference/candidate/{user_id}", response_model=list[Dict], tags=["Main"],
                  dependencies=[Depends(JWTBearer(access_level=0))])
 async def get_all_vacancies(user_id: int):
     """
@@ -161,7 +163,7 @@ async def get_all_vacancies(user_id: int):
         raise ex
 
 
-@app_server.get("/get_all_candidates/inference/vacancy/{vacancy_id}", response_model=Dict, tags=["Main"],
+@app_server.get("/get_all_candidates/inference/vacancy/{vacancy_id}", response_model=list[Dict], tags=["Main"],
                  dependencies=[Depends(JWTBearer(access_level=0))])
 async def get_all_candidataes(vacancy_id: int):
     """
@@ -1095,9 +1097,6 @@ if __name__ == "__main__":
     log.info("Start run server")
     run_server()
 
-    # Первая прогонка данных
-    try:
-        from src.services.main_services import similarity_start
-        similarity_start()
-    except Exception as ex:
-        log.error("Error", exc_info=ex)
+    # # Первая прогонка данных
+    # from src.services.main_services import similarity_start
+    # similarity_start()
