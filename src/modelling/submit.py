@@ -5,6 +5,7 @@ from tqdm import tqdm
 import pickle
 from scipy.stats import pearsonr
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import euclidean_distances
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -31,6 +32,10 @@ def compute_pearson_matrix(user_embeddings, type_embeddings):
         similarity.append(similarity_vector)
     return np.array(similarity)
 
+def compute_euclidean_similarity(user_embeddings, type_embeddings):
+    dist_matrix = euclidean_distances(user_embeddings, type_embeddings)
+    return np.exp(-dist_matrix)  # нормализуем экспоненциальной функцией
+
 
 def submit(user_embedding_folder, type_embeddings_folder, metric='cosine'):
     type_embeddings = load_type_embeddings(type_embeddings_folder)
@@ -46,6 +51,8 @@ def submit(user_embedding_folder, type_embeddings_folder, metric='cosine'):
                 similarity_vector = compute_similarity_matrix(user_embedding.reshape(1, -1), type_embeddings)[0]
             elif metric == 'pearson':
                 similarity_vector = compute_pearson_matrix(user_embedding.reshape(1, -1), type_embeddings)[0]
+            elif metric == 'euclidean':
+                similarity_vector = compute_euclidean_similarity(user_embedding.reshape(1, -1), type_embeddings)[0]
             else:
                 raise ValueError("Unsupported metric! Use 'cosine' or 'pearson'.")
             similarity_matrix.append(similarity_vector)
@@ -63,7 +70,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Compute MBTI similarity based on embeddings.")
     parser.add_argument("user_embedding_folder", type=str, help="Path to folder with user embeddings (.npy files).")
     parser.add_argument("type_embeddings_folder", type=str, help="Path to folder with type embeddings (.npy files).")
-    parser.add_argument("--metric", type=str, choices=['cosine', 'pearson'], default='cosine',
+    parser.add_argument("--metric", type=str, choices=['cosine', 'pearson', 'euclidean'], default='cosine',
                         help="Similarity metric to use ('cosine' or 'pearson').")
     parser.add_argument("--o", type=str, default="similarity_results.pkl", help="Output file name for saving the results in pkl format.")
     

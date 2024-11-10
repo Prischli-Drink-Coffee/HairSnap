@@ -4,9 +4,30 @@ import numpy as np
 import pandas as pd
 import pickle
 import warnings
+from scipy.stats import pearsonr
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import euclidean_distances
+
 warnings.filterwarnings("ignore")
 
-from src.modelling.submit import compute_similarity_matrix, compute_pearson_matrix
+
+def compute_similarity_matrix(user_embeddings, type_embeddings):
+    return (cosine_similarity(user_embeddings, type_embeddings) + 1) / 2
+
+
+def compute_pearson_matrix(user_embeddings, type_embeddings):
+    similarity = []
+    for user_embedding in user_embeddings:
+        similarity_vector = []
+        for type_embedding in type_embeddings:
+            corr, _ = pearsonr(user_embedding, type_embedding)
+            similarity_vector.append((corr + 1) / 2)  # Преобразуем корреляцию в диапазон [0, 1]
+        similarity.append(similarity_vector)
+    return np.array(similarity)
+
+def compute_euclidean_similarity(user_embeddings, type_embeddings):
+    dist_matrix = euclidean_distances(user_embeddings, type_embeddings)
+    return np.exp(-dist_matrix)  # нормализуем экспоненциальной функцией
 
 def get_mbti_name(mbti_type):
     mbti_descriptions = {
