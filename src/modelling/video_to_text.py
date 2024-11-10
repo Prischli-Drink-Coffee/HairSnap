@@ -1,11 +1,23 @@
 import os
 import sys
+import shutil
 import argparse
+from tqdm import tqdm
 import pandas as pd
 import torch
 import torchaudio
 from moviepy.editor import VideoFileClip
+import moviepy.config as mpy_config
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import logging
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
+# Отключаем логи moviepy
+mpy_config.change_settings({"logger": None})
 
 def video2audio(path_to_video: str, audio_folder: str):
     """Convert .mp4 to .wav"""
@@ -16,7 +28,7 @@ def video2audio(path_to_video: str, audio_folder: str):
     audio_path = os.path.join(audio_folder, f"{filename}.wav")
 
     clip = VideoFileClip(path_to_video)
-    clip.audio.write_audiofile(audio_path, codec='pcm_s16le')
+    clip.audio.write_audiofile(audio_path, codec='pcm_s16le', verbose=False, logger=None)
 
     return audio_path
 
@@ -27,7 +39,7 @@ def load_models(model_id, device):
 
 def audio2text(path_to_audio: str, path_to_table_speech: str,
                processor: Wav2Vec2Processor, model: Wav2Vec2ForCTC,
-               device: str = 'cuda'):
+               device: str = 'cuda', save_table=True):
     # Загружаем аудио
     speech_array, sampling_rate = torchaudio.load(path_to_audio)
     
@@ -53,20 +65,14 @@ def audio2text(path_to_audio: str, path_to_table_speech: str,
     
     # Сохраняем результат в таблицу
     filename = os.path.splitext(os.path.basename(path_to_audio))[0]
-    data = pd.DataFrame({'candidate': [filename], 'speech': [predicted_sentence]})
-    if os.path.exists(path_to_table_speech):
-        table = pd.read_csv(path_to_table_speech)
-        data = pd.concat((table, data))
-    data.to_csv(path_to_table_speech, index=False)
+    if save_table:
+        data = pd.DataFrame({'candidate': [filename], 'speech': [predicted_sentence]})
+        if os.path.exists(path_to_table_speech):
+            table = pd.read_csv(path_to_table_speech)
+            data = pd.concat((table, data))
+        data.to_csv(path_to_table_speech, index=False)
 
     return predicted_sentence
-
-
-# model ids
-# MODEL_ID = "jonatasgrosman/wav2vec2-xls-r-1b-russian"   # 3.85 Gb
-# MODEL_ID = "jonatasgrosman/wav2vec2-large-xlsr-53-russian"  # 1.2 Gb
-# MODEL_ID = "emre/wav2vec2-xls-r-300m-Russian-small"   # 1.2 Gb
-# "UrukHan/wav2vec2-russian" - но с текущим не запускается
 
 def main():
     parser = argparse.ArgumentParser(description="Convert video to audio and transcribe speech to text.")
@@ -88,18 +94,16 @@ def main():
         sys.exit(1)
 
     # Загрузка модели и процессора
-    processor, model = load_models(model_id="jonatasgrosman/wav2vec2-large-xlsr-53-russian", device=device)
+    processor, model = load_models(model_id="facebook/wav2vec2-large-960h-lv60-self", device=device)
     
     if args.video_folder_path:
-        for filename in os.listdir(args.video_folder_path):
+        for filename in tqdm(os.listdir(args.video_folder_path)):
             if filename.endswith(".mp4"):
                 video_file_path = os.path.join(args.video_folder_path, filename)
-                print(f"Converting video to audio: {video_file_path}")
                 audio_path = video2audio(video_file_path, args.audio_folder)
-                print(f"Converting audio to text")
                 predicted_sentence = audio2text(audio_path, args.table_path, processor, model, device)
-                print(f'Speech: \n {predicted_sentence} \n')
                 os.remove(audio_path)
+        shutil.rmtree(args.audio_folder)
                 
     else:
         print(f"Converting video to audio: {args.video_file_path}")

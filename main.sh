@@ -54,9 +54,6 @@ if [ $? -eq 0 ]; then
             '3')
                 gnome-terminal -- python3 ./src/pipeline/test.py
                 ;;
-            '4')
-                gnome-terminal -- python3 ./src/pipeline/eda.py
-                ;;
             *)
                 echo "Неизвестное значение в env: $var"
                 ;;
@@ -74,9 +71,6 @@ if [ $? -eq 0 ]; then
                 ;;
             '3')
                 python3 ./src/pipeline/test.py
-                ;;
-            '4')
-                python3 ./src/pipeline/eda.py
                 ;;
             *)
                 echo "Неизвестное значение в env: $var"

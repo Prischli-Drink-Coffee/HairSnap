@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `info_candidates` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `gender` enum('male','female') COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `date_birth` timestamp NULL DEFAULT NULL,
   `file_id` int(11) DEFAULT NULL,
   `embedding_id` int(11) DEFAULT NULL
@@ -316,20 +316,20 @@ ALTER TABLE `candidate_vacancies`
 -- Ограничения внешнего ключа таблицы `info_candidates`
 --
 ALTER TABLE `info_candidates`
-  ADD CONSTRAINT `info_candidates_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `info_candidates_ibfk_2` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `info_candidates_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `info_candidates_ibfk_2` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
 
 --
 -- Ограничения внешнего ключа таблицы `magics`
 --
 ALTER TABLE `magics`
-  ADD CONSTRAINT `magics_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `magics_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE;
 
 --
 -- Ограничения внешнего ключа таблицы `personalities`
 --
 ALTER TABLE `personalities`
-  ADD CONSTRAINT `personalities_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `personalities_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
 
 --
 -- Ограничения внешнего ключа таблицы `personality_vacancies`
@@ -342,7 +342,7 @@ ALTER TABLE `personality_vacancies`
 -- Ограничения внешнего ключа таблицы `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`info_id`) REFERENCES `info_candidates` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`info_id`) REFERENCES `info_candidates` (`id`) ON DELETE CASCADE;
   
 --
 -- Ограничения внешнего ключа таблицы `personality_candidates`
@@ -356,7 +356,7 @@ ALTER TABLE `personality_candidates`
 -- Ограничения внешнего ключа таблицы `vacancies`
 --
 ALTER TABLE `vacancies`
-  ADD CONSTRAINT `vacancies_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `vacancies_ibfk_1` FOREIGN KEY (`embedding_id`) REFERENCES `embeddings` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
