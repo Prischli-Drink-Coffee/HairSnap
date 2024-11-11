@@ -1,9 +1,9 @@
 import os
 import uuid
 import numpy as np
-from src.services import (file_services, embedding_services, personality_services, candidate_vacancy_services,
+from src.services import (file_services, embedding_services, personality_services, candidate_vacancy_services, personality_vacancy_services,
                           personality_candidate_services, info_candidate_services, user_services, personality_services, vacancy_services)
-from src.database.models import Users, Embeddings, Files, InfoCandidates, Personalities, PersonalityCandidates, Users, Vacancies
+from src.database.models import Users, Embeddings, Files, InfoCandidates, Personalities, PersonalityCandidates, Users, Vacancies, PersonalityVacancies
 from fastapi import HTTPException, status, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from src.utils.write_file_into_server import write_file_into_server, write_embedding_into_server
@@ -14,6 +14,7 @@ from src.utils.log_debugging import debug_ex, debug_err, debug_info
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import MinMaxScaler
 from src.modelling.user_embedding import get_user_embedding
+from decimal import Decimal, ROUND_HALF_UP
 from env import Env
 
 
@@ -126,13 +127,13 @@ def similarity_for_user(user_id: int):
     # Получаем данные по конкретному пользователю
     user = user_services.get_user_by_id(user_id)
     info_candidate = info_candidate_services.get_info_candidate_by_id(user.InfoID)
-    user_embedding = np.load(embedding_services.get_embedding_by_id(info_candidate.EmbeddingID))
+    user_embedding = np.load(f"./data/{embedding_services.get_embedding_by_id(info_candidate.EmbeddingID).Url}")
 
     # Получаем все вакансии
     vacancies = vacancy_services.get_all_vacancies()
     vacancy_embeddings = []
     for vacancy in vacancies:
-        vacancy_embeddings.append(np.load(embedding_services.get_embedding_by_id(vacancy.EmbeddingID)))
+        vacancy_embeddings.append(np.load(embedding_services.get_embedding_by_id(vacancy.EmbeddingID).Url))
     vacancy_embeddings = np.vstack(vacancy_embeddings)
 
     # Строим матрицу сходства для пользователя, личностей и вакансий
@@ -145,23 +146,22 @@ def similarity_for_user(user_id: int):
         if similarity >= 0.7:  # Пороговое значение сходства
             # Создаем запись в базе данных
             personality_candidate = PersonalityCandidates(
-                PersonalityID=personality.ID,
-                UserID=user.ID,
-                Distance=similarity
+                personality_id=personality.ID,
+                user_id=user.ID,
+                distance=min(Decimal(str(similarity)).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP), Decimal("0.999999"))
             )
             personality_candidate_services.create_personality_candidate(personality_candidate)
 
     # Запись данных в таблицу PersonalityVacancies (сходства личности и вакансии)
-    for j, vacancy in enumerate(vacancies):
-        similarity = P[0, j]  # Для одного пользователя индекс 0
+    for similarity, vacancy in zip(P[0, :], vacancies):
         if similarity >= 0.7:  # Пороговое значение сходства
             # Создаем запись в базе данных
             personality_vacancy = PersonalityVacancies(
-                PersonalityID=personalities[j].ID,  # Привязываем к личности, с которой считано сходство
-                VacancyID=vacancy.ID,
-                Distance=similarity
+                personality_id=personalities[j].ID,  # Привязываем к личности, с которой считано сходство
+                vacancy_id=vacancy.ID,
+                distance=min(Decimal(str(similarity)).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP), Decimal("0.999999"))
             )
-            personality_services.create_personality_vacancy(personality_vacancy)
+            personality_vacancy_services.create_personality_vacancy(personality_vacancy)
 
     # Запись данных в таблицу CandidateVacancies (сходства кандидата и вакансии)
     for j, vacancy in enumerate(vacancies):
@@ -169,11 +169,11 @@ def similarity_for_user(user_id: int):
         if similarity >= 0.7:  # Пороговое значение сходства
             # Создаем запись в базе данных
             candidate_vacancy = CandidateVacancies(
-                UserID=user.ID,
-                VacancyID=vacancy.ID,
-                Distance=similarity
+                user_id=user.ID,
+                vacancy_id=vacancy.ID,
+                distance=min(Decimal(str(similarity)).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP), Decimal("0.999999"))
             )
-            vacancy_services.create_candidate_vacancy(candidate_vacancy)
+            candidate_vacancy_services.create_candidate_vacancy(candidate_vacancy)
 
     return C
 
@@ -193,37 +193,50 @@ async def upload_video(file,
     # Записываем информацию в базу данных
     file_entity = file_services.create_file(Files(url=f"data/files/{unique_file}"))
     # Обрабатываем видео для получения эмбендинга
-    log.info(file_entity.Url)
     video_embedding = get_user_embedding(file_entity.Url)
     # Сохраняем файл ембендинга на сервер
     unique_embedding = write_embedding_into_server("users", video_embedding)
     # Записываем информацию в базу данных
     embedding_entity = embedding_services.create_embedding(Embeddings(url=f"embeddings/users/{unique_embedding}"))
     # Записать данные в info_candidate
-    info_candidate = info_candidate_services.create_info_candidate(InfoCandidates(
-        name=name,
-        phone=phone,
-        gender=gender,
-        date_birth=date_birth,
-        file_id=file_entity.ID,
-        embedding_id=embedding_entity.ID
-    ))
-    # Обновить данные профиля
     user = user_services.get_user_by_id(user_id)
+    log.info(user)
+    if user.InfoID is not None:
+        info_candidate = info_candidate_services.get_info_candidate_by_id(user.InfoID)
+        info_candidate.Name = name
+        info_candidate.Phone = phone
+        info_candidate.DateBirth = date_birth
+        info_candidate.Gender = gender
+        info_candidate = info_candidate_services.update_info_candidate(user.InfoID, info_candidate.model_dump(by_alias=True))
+        info_candidate = info_candidate_services.get_info_candidate_by_id(user.InfoID)
+    else:
+        info_candidate = info_candidate_services.create_info_candidate(InfoCandidates(
+            name=name,
+            phone=phone,
+            gender=gender,
+            date_birth=date_birth,
+            file_id=file_entity.ID,
+            embedding_id=embedding_entity.ID
+        ))
+    # Обновить данные профиля
     user.InfoID = info_candidate.ID
-    user_services.update_user(user.ID, user)
-    C = similarity_for_user(user.ID)
-    print(C)
-
+    user.CreatedAt = f"{user.CreatedAt}"
+    user.Type = user.Type.value
+    user.Role = user.Role.value
+    user_services.update_user(user.ID, user.model_dump(by_alias=True))
+    # try:
+    #     C = similarity_for_user(user.ID)
+    # except Exception as ex:
+    #     log.exception(ex)
 
     return {
         "email": user.Email,
         "name": info_candidate.Name,
         "phone": info_candidate.Phone,
-        "gender": info_candidate.Gender.value,
+        "gender": info_candidate.Gender,
         "date_birth": f"{info_candidate.DateBirth}",
         "video_url": return_url_object(file_entity.Url),
-        "C": C.cpu().numpy().to_list()
+        # "C": C.cpu().numpy().to_list()
     }
 
 
