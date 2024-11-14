@@ -1,0 +1,10 @@
+.Link {
+  font-size: 20px;
+}
+.Link:hover {
+  text-decoration: underline;
+}
+.Link__active {
+  font-weight: bold;
+  color: #ffbf00;
+}
