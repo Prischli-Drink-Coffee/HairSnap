@@ -14,12 +14,12 @@
 
 ### Внешний вид графического интерфейса на React:
 
-| ![Registration](./src/images/registration.svg) | ![Authorization](./src/images/authorization.svg) |
+| ![Registration](src/images/registration.svg) | ![Authorization](src/images/authorization.svg) |
 |------------------------------------------------|--------------------------------------------------|
 
 
-Все страницы сайта можно посмотреть [**здесь**](./src/images/HireSnap.pdf) <br/>
-Презентация проекта находится [**здесь**](./src/images/HireSnap_presentation.pdf)
+Все страницы сайта можно посмотреть [**здесь**](src/images/HireSnap.pdf) <br/>
+Презентация проекта находится [**здесь**](src/images/HireSnap_presentation.pdf)
 
 
 - [Структура репозитория](#структура-репозитория)
@@ -72,7 +72,7 @@
 
 ### Реляционная база данных:
 
-![image](./src/images/HireSnap.svg)
+![image](src/images/HireSnap.svg)
 
 
 
